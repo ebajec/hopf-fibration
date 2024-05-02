@@ -11,9 +11,9 @@
 #define WIDTH 800
 #define HEIGHT 800
 #define PI 3.141592654f
+#define SPH_ATTR_COUNT 3
 #define PATH_SIZE 100
 #define CIRC_SIZE 1000
-
 
 vec3 S2(GLfloat phi, GLfloat theta) {
     return vec3{sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
@@ -42,10 +42,9 @@ std::vector<T> lerp(T start, T end, int steps) {
 
 /**********************************************************************************
  *
- * 
+ * Sphere.
  * 
  **********************************************************************************/
-#define SPH_ATTR_COUNT 3
 template<int phi_step, int theta_step> class Sphere {
 public:
     Sphere() {}
