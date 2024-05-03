@@ -214,24 +214,28 @@ bool HopfSimulation::_initShaders() {
 
     // Initialize main shader and camera
 
-    hf_main_shader.addShader("../shader/main_vertex.glsl",GL_VERTEX_SHADER);
-    hf_main_shader.addShader("../shader/main_frag.glsl",GL_FRAGMENT_SHADER);
+    if(!hf_main_shader.addShader("../shader/main_vertex.glsl",GL_VERTEX_SHADER)||
+       !hf_main_shader.addShader("../shader/main_frag.glsl",GL_FRAGMENT_SHADER))
+        return false;
     hf_main_shader.link();
 
     if (!_cam.bindToShader(hf_main_shader,"Camera",HF_CAMERA_BINDING)) return false;
     
+    
     // Initialize hopf map shader and fiber data
-
-    hf_map.addShader("../shader/hopf_map.glsl",GL_VERTEX_SHADER);
+    
+    if(!hf_map.addShader("../shader/hopf_map.glsl",GL_VERTEX_SHADER))
+        return false;
     const GLchar* hf_feedback_varyings[] = { "data_out" };
     glTransformFeedbackVaryings(hf_map.program, 1, hf_feedback_varyings, GL_INTERLEAVED_ATTRIBS);
     hf_map.link();
 
     // Initialize control window shader and camera
 
-    c_shader.addShader("../shader/control_window_vertex.glsl",GL_VERTEX_SHADER);
-    c_shader.addShader("../shader/control_window_frag.glsl",GL_FRAGMENT_SHADER);
-    c_Shader.link();
+    if (!c_shader.addShader("../shader/control_window_vertex.glsl",GL_VERTEX_SHADER)||
+        !c_shader.addShader("../shader/control_window_frag.glsl",GL_FRAGMENT_SHADER))
+        return false;
+    c_shader.link();
 
     if (!c_cam.bindToShader(c_shader,"Camera",C_CAMERA_BINDING)) return false;
 
@@ -323,7 +327,7 @@ void HopfSimulation::_main()
     ImGui_ImplOpenGL3_Init("#version 330");
 
     if (!_initShaders()) {
-        printf("Failed to initialize shaders.\n");
+        printf("ERROR: Failed to initialize shaders.\n");
         return;
     }
     _initFiberData();

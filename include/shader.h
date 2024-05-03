@@ -14,9 +14,9 @@ class ShaderProgram {
 public:
 	ShaderProgram() {}
 	ShaderProgram(const char* path, GLuint type);
-	void addShader(const char* path, GLuint type);
+	bool addShader(const char* path, GLuint type);
 	void use() const { glUseProgram(program); }
-	void link();
+	bool link();
 
 	void setUniform(const char* name, int value);
 	void setUniform(const char* name, unsigned int value);
@@ -32,7 +32,7 @@ public:
 	bool initialized = false;
 protected:
 
-	void _compileShader(GLenum type, const char* source);
+	bool _compileShader(GLenum type, const char* source);
 
 	//create shader program
 	void _init() { 
