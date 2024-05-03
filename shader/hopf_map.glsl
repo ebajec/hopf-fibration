@@ -9,8 +9,10 @@ out vec4 data_out;
 float PI = 3.141592654;
 
 vec3 sphere_path(float t) {
-    float s = 3*PI*t - TIME_S*ANIM_SPEED;
-    return vec3(sin(s)*cos(2*PI*t),sin(s)*sin(2*PI*t),cos(s));
+    float time = TIME_S*ANIM_SPEED;
+    t = 2*PI*t;
+    float s = t + PI*cos(t) - time;
+    return vec3(sin(t)*cos(s),sin(t)*sin(s),cos(t));
 }
 
 vec4 compute_hopf_inverse(vec4 s) {
