@@ -223,7 +223,7 @@ bool HopfSimulation::_initShaders() {
     
     
     // Initialize hopf map shader and fiber data
-    
+
     if(!hf_map.addShader("../shader/hopf_map.glsl",GL_VERTEX_SHADER))
         return false;
     const GLchar* hf_feedback_varyings[] = { "data_out" };
@@ -375,6 +375,12 @@ int main()
     HopfSimulation sim(WIDTH,HEIGHT);
     
     sim.launch("Hopf Fibration",NULL,NULL);
+    while(!sim.isRunning()){}
+    
+    printf("-----------------------------\n");
+    printf("Press ESC to toggle GUI access\n");
+    printf("Use WASD and mouse to move\n");
+
     sim.main_thread.join();
     glfwTerminate();
     return 0;
