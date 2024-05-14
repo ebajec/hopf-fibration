@@ -15,20 +15,21 @@
 
 #define SPH_ATTR_COUNT 3            
 
-#define CONTROL_VIEWPORT_SIZE 300   // Determines height/width of lower-right viewport
+#define CONTROL_VIEWPORT_SIZE 600   // Determines height/width of lower-right viewport
 
 #define FIBER_COUNT 100             // Number of fibers to compute
 #define FIBER_SIZE 1000             // Number of samples in each fiber
 
-#define HF_CAMERA_BINDING 0
-#define C_CAMERA_BINDING 1
+#define HF_CAMERA_BINDING 1
+#define C_CAMERA_BINDING 0
 
 /**********************************************************************************
  * 
  * Helper functions
  * 
  ***********************************************************************************/
-vec3 S2(GLfloat phi, GLfloat theta) {
+vec3 S2(GLfloat phi, GLfloat theta) 
+{
     return vec3{sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
 }
 void printData(GLfloat* data, int x, int y) 
@@ -40,7 +41,8 @@ void printData(GLfloat* data, int x, int y)
         std::cout << "\n";
     }
 }
-template<typename T> std::vector<T> lerp(T start, T end, int steps) {
+template<typename T> std::vector<T> lerp(T start, T end, int steps) 
+{
     std::vector<T>  out(steps+1);   
     T diff = end - start;
     float step = pow(steps,-1);
@@ -50,7 +52,25 @@ template<typename T> std::vector<T> lerp(T start, T end, int steps) {
     }
     return out;
 }
+unsigned int factorial(int n) {
+    return (n > 0) ? n*factorial(n-1) : 1;
+}
+template<int n,typename T> matrix<n,n,T> exp(matrix<n,n,T> mat) {
+    auto result = matrix<n,n,T>::id();
+    result = result + mat;
+    mat = mat*mat;
+    result = result + T(0.5)*mat;
+    mat = mat*mat;
+    result = result + T(pow(6.0f,-1))*mat;
+    mat = mat*mat;
+    result = result + T(pow(24.0f,-1))*mat;
+    return result;
+}
+float uRand() 
+{
+    return static_cast<float>(rand())/static_cast<float>(RAND_MAX);
 
+}
 /**********************************************************************************
  *
  * Sphere
@@ -60,18 +80,22 @@ template<int phi_step, int theta_step> class Sphere {
 public:
     Sphere() {}
     ~Sphere();
-    void init(GLuint usage = GL_STATIC_DRAW);
+    void init(vec3 color = {0.5,0.5,0.5},GLuint usage = GL_STATIC_DRAW);
     void setScale(GLfloat s);
     void setPos(vec3 pos);
-    void render(ShaderProgram shader);
+    void rotate(vec3 axis, GLfloat angle);
+    void render(ShaderProgram& shader);
     
-    enum ATTR {POSITION,COLOR,NORMAL};
+    enum ATTRIBUTES {POSITION,COLOR,NORMAL};
 private:
-    mat4 transformation = mat4::id();   // Affine transformation applied to object.
+    
     GLuint vao;             
-    GLuint vbo[SPH_ATTR_COUNT];                      
+    GLuint vbo[SPH_ATTR_COUNT];                   
     GLint draw_firsts[phi_step];        // For glMultiDrawArrays
     GLsizei draw_counts[theta_step];    // For glMultiDrawArrays
+
+    GLfloat scale = 1;
+    mat4 geometry = mat4::id();
 };
 /**********************************************************************************
  * 
@@ -82,7 +106,7 @@ template<int phi_step, int theta_step> Sphere<phi_step,theta_step>::~Sphere() {
     glDeleteBuffers(3,vbo);
     glDeleteVertexArrays(1,&vao);
 }
-template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::init(GLuint usage) {
+template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::init(vec3 color,GLuint usage) {
     int data_size = 8*phi_step*theta_step;
     GLfloat* data_pos = new GLfloat[data_size];
     GLfloat* data_color = new GLfloat[data_size];
@@ -92,6 +116,10 @@ template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::init(GL
 
     int idx = 0;
     vec4 p;
+    auto s_color = [](GLfloat in_phi, GLfloat in_theta) {
+        vec3 s = S2(in_phi/4,in_theta/2);
+        return vec4{pow(*s[0],2),pow(*s[1],2),pow(*s[2],2),1};
+    };   
 
     for (int i = 0; i < phi_step; i++) {
         for (int j = 0; j < theta_step; j++) {
@@ -99,16 +127,16 @@ template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::init(GL
             p = vec4(S2(phi[i],theta[j]));
             memcpy(data_pos + idx, p.data(),4*sizeof(float));
 
-            p = vec4{1,1,1,1};
+            p = vec4(color);//s_color(phi[i],theta[j]);
             memcpy(data_color + idx, p.data(),4*sizeof(float));
 
             idx += 4;
 
             // Second point
-            p = vec4(S2(phi[i + 1],theta[j+1]));
+            p = vec4(S2(phi[i+1],theta[j+1]));
             memcpy(data_pos + idx, p.data(),4*sizeof(float));
 
-            p = vec4{1,1,1,1};
+            p = vec4(color);//s_color(phi[i+1],theta[j+1]);
             memcpy(data_color + idx, p.data(),4*sizeof(float));
 
             idx += 4;
@@ -145,19 +173,90 @@ template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::init(GL
     delete[] data_color;
     return;
 }
-template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::render(ShaderProgram shader) {
+template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::render(ShaderProgram& shader) {
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 
     shader.use();
+    shader.setUniform("obj_geometry",geometry,GL_TRUE);
+    shader.setUniform("scale",scale);
     glBindVertexArray(vao);
     //glDrawArrays(GL_TRIANGLE_STRIP,0,2*phi_step*theta_step);
     glMultiDrawArrays(GL_TRIANGLE_STRIP,draw_firsts,draw_counts,phi_step);
     return;
 }
+template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::setScale(GLfloat in_scale) 
+{
+    this->scale = in_scale;
+    return;
+}
+template<int phi_step, int theta_step> void Sphere<phi_step,theta_step>::setPos(vec3 pos) 
+{
+    geometry[0][3] = pos[0][0];
+    geometry[1][3] = pos[1][0];
+    geometry[2][3] = pos[2][0];
+    return;
+}
+template <int phi_step, int theta_step> void Sphere<phi_step,theta_step>::rotate(vec3 axis, GLfloat angle) 
+{   
+    axis = normalize(axis);
+    mat3 differential = mat3{
+         0,         -*axis[2],   *axis[1],
+         *axis[2],   0,         -*axis[0],
+        -*axis[1],   *axis[0],   0
+    };
+    mat4 rotation = mat4(exp(angle*differential));
+    geometry = geometry * rotation;
+    return;
+} 
 
+/**********************************************************************************
+ * 
+ * Control sphere manager
+ * 
+ **********************************************************************************/
+#define SPHERE_SIZE 128
+#define SCOUNT 100
+class SphereController{
+public:
+    SphereController() {}
+    void init();
+    void render(ShaderProgram& shader);
+    void transform(mat4 trans);
+private:
+    mat4 geometry = mat4::id();
+    vector<vec3> points;
+    Sphere<SPHERE_SIZE,SPHERE_SIZE> sphere;
+
+};
+/**********************************************************************************
+ * 
+ * Implementation details for SphereController
+ * 
+ **********************************************************************************/
+void SphereController::init() 
+{
+    points = vector<vec3>(SCOUNT);
+    for (int i = 0; i < SCOUNT; i++) 
+        points[i] = S2(uRand()*2*PI,uRand()*PI);
+    sphere.init(vec3{1,0,0});
+    sphere.setScale(0.07f);
+    return;
+}
+void SphereController::render(ShaderProgram& shader)
+{   
+    for (int i = 0; i < SCOUNT; i++) 
+    {
+        sphere.setPos(vec3(geometry*vec4(points[i])));   
+        sphere.render(shader);
+    }
+}
+void SphereController::transform(mat4 trans) 
+{
+    geometry = geometry*trans;
+}
 
 /**********************************************************************************
  * 
@@ -176,14 +275,17 @@ public:
 
 protected:
     void _main();
-    bool _initFiberData();
-    bool _initShaders();
-    void _renderFibers();
-    void _renderUI();
+    bool initFiberData();
+    bool initControllerData();
+    bool initShaders();
+    void renderFibers();
+    void renderControlSphere();
+    void renderUI();
 
+    SphereController controller;
     ShaderProgram c_shader;
     Camera c_cam;
-    Sphere<30,30> c_sphere;
+    Sphere<128,128> c_sphere;
     
     ShaderProgram hf_main_shader;                   // Handles rendering of main scene 
     ShaderProgram hf_map;                           // Computes fibers of hopf map
@@ -203,14 +305,14 @@ protected:
  * 
  **********************************************************************************/
 HopfSimulation::HopfSimulation(int width, int height) : BaseViewWindow(width, height) {
-    c_cam = Camera(vec3{1,0,0},vec3{-5,0,0},CONTROL_VIEWPORT_SIZE,CONTROL_VIEWPORT_SIZE,PI/3);
+    c_cam = Camera(vec3({-1,0,0}),vec3({2,0,0}),CONTROL_VIEWPORT_SIZE,CONTROL_VIEWPORT_SIZE,PI/4);
 }
 HopfSimulation::~HopfSimulation() {
     glDeleteBuffers(1,&hf_vbo_in);
     glDeleteBuffers(1,&hf_vbo_out);
     glDeleteVertexArrays(1,&hf_vao);
 }
-bool HopfSimulation::_initShaders() {
+bool HopfSimulation::initShaders() {
 
     // Initialize main shader and camera
 
@@ -219,7 +321,7 @@ bool HopfSimulation::_initShaders() {
         return false;
     hf_main_shader.link();
 
-    if (!_cam.bindToShader(hf_main_shader,"Camera",HF_CAMERA_BINDING)) return false;
+    if (!w_cam.bindToShader(hf_main_shader,"Camera",HF_CAMERA_BINDING)) return false;
     
     
     // Initialize hopf map shader and fiber data
@@ -238,10 +340,10 @@ bool HopfSimulation::_initShaders() {
     c_shader.link();
 
     if (!c_cam.bindToShader(c_shader,"Camera",C_CAMERA_BINDING)) return false;
-
+    
     return true;
 }   
-bool HopfSimulation::_initFiberData() 
+bool HopfSimulation::initFiberData() 
 {
     // Set up linearly spaced inputs for fiber calculation.
     for (int i = 0; i < FIBER_COUNT; i++) {
@@ -267,7 +369,15 @@ bool HopfSimulation::_initFiberData()
     glBufferData(GL_ARRAY_BUFFER, sizeof(hf_data_in), nullptr, GL_STATIC_READ);  
     return true; 
 }
-void HopfSimulation::_renderFibers() 
+bool HopfSimulation::initControllerData() 
+{
+    c_cam.init();
+    c_sphere.init();
+    controller.init();
+
+    return true;
+}
+void HopfSimulation::renderFibers() 
 {
     hf_map.use();
     hf_map.setUniform("ANIM_SPEED",hf_anim_speed);
@@ -295,12 +405,26 @@ void HopfSimulation::_renderFibers()
     glBindBuffer(GL_ARRAY_BUFFER,hf_vbo_out);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
+    // Render hopf fibration in main viewport
+    glViewport(0, 0, w_width, w_height);
+    w_cam.setScreenRatio(w_width,w_height);
+    w_cam.updateUniformData();
+
     glDepthMask(GL_TRUE);
     hf_main_shader.use();
     glMultiDrawArrays(GL_LINE_LOOP,hf_draw_firsts,hf_draw_counts,hf_draw_max);
 
 }
-void HopfSimulation::_renderUI()
+void HopfSimulation::renderControlSphere()
+{   
+    // Render sphere in bottom right corner
+    glViewport(w_width - CONTROL_VIEWPORT_SIZE, 0, CONTROL_VIEWPORT_SIZE, CONTROL_VIEWPORT_SIZE);
+    c_cam.updateUniformData();
+
+    c_sphere.render(c_shader);
+    controller.render(c_shader);   
+}
+void HopfSimulation::renderUI()
 {
     // Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
@@ -317,48 +441,36 @@ void HopfSimulation::_renderUI()
 }
 void HopfSimulation::_main()
 {
-    glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    ImGui_ImplGlfw_InitForOpenGL(_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    if (!_initShaders()) {
+    glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
+
+    initFiberData();
+    initControllerData();
+    
+    if (!initShaders()) {
         printf("ERROR: Failed to initialize shaders.\n");
         return;
     }
-    _initFiberData();
-
-    c_sphere.init();
-
-    while (!glfwWindowShouldClose(_window)) {
+    
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-
-        // Correct window scaling
-    	glfwGetFramebufferSize(_window, &_width, &_height);
-
-        // Clear buffer
+    	glfwGetFramebufferSize(window, &w_width, &w_height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        _cam.setScreenRatio(_width,_height);
-        _cam.updateUniformData();
+        controller.transform(mat4(rot_axis<GLfloat>(vec3{0,1,1},PI/256)));
 
         //Rendering
+        renderFibers();
+        renderControlSphere();
+        renderUI();
 
-        // Render sphere in bottom right corner
-        glViewport(_width - CONTROL_VIEWPORT_SIZE, 0, _width, CONTROL_VIEWPORT_SIZE);
-        c_sphere.render(hf_main_shader);
-
-        // Render hopf fibration in main viewport
-        glViewport(0, 0, _width, _height);
-        _renderFibers();
-
-
-        _renderUI();
-    	glfwSwapBuffers(_window);    
+    	glfwSwapBuffers(window);    
     }
 
     ImGui_ImplOpenGL3_Shutdown();
@@ -375,13 +487,12 @@ int main()
     HopfSimulation sim(WIDTH,HEIGHT);
     
     sim.launch("Hopf Fibration",NULL,NULL);
-    while(!sim.isRunning()){}
-    
+     
     printf("-----------------------------\n");
     printf("Press ESC to toggle GUI access\n");
     printf("Use WASD and mouse to move\n");
 
-    sim.main_thread.join();
+    sim.waitForClose();
     glfwTerminate();
     return 0;
 }
