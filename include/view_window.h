@@ -14,8 +14,13 @@ class KeyManager;
 class BaseViewWindow;
 
 struct WinState{
+	enum ControlState
+	{
+		CONTROL_GUI,
+		CONTROL_CAMERA	
+	};
 	bool is_running = false;
-	bool mouse_enabled = false;
+	ControlState control_state = CONTROL_GUI;
 };
 
 /*Maps or unmaps keys + actions to functions, and holds information regarding the 
@@ -44,23 +49,23 @@ public:
 */
 class CameraManager {
 private:
-	thread _updater;
-	Camera* _cam = nullptr;
-	vec2 _cursor_pos = { 0,0 };
+	thread updater;
+	Camera* cam;
+	vec2 cursor_pos = { 0,0 };
 
 	void _update_loop(WinState* state);
 public:
 
 	/*Camera will move in this direction each camera update. Camera::translate()
 	* is called with motion_dir as the argument.*/
-	vec3 motion_dir = { 0,0,0 };
-	float movespeed = 0.2;
-	float sensitivity = 0.004;
+	vec3 cam_motion_dir = { 0,0,0 };
+	float cam_movespeed = 0.2;
+	float cam_sensitivity = 0.004;
 
 	CameraManager() {}
 
 	//sets Camera object to be controlled
-	void attach(Camera* cam) { _cam = cam; }
+	void attach(Camera* in_cam);
 	//launches thread which contiuously updates camera
 	void start(WinState* state);
 	//terminates updater thread
@@ -83,17 +88,15 @@ public:
 */
 class BaseViewWindow {
 protected:
-	GLFWwindow* _window = NULL;
+	int w_height;
+	int w_width;
 
-	int _height;
-	int _width;
-	WinState state;
-
-	Camera _cam;
-	KeyManager _key_manager;
-	CameraManager _cam_manager;
-	bool _initialized = false;
-
+	GLFWwindow* window = NULL;
+	WinState w_state;
+	thread w_main_thread;
+	Camera w_cam;
+	KeyManager w_key_manager;
+	CameraManager w_cam_manager;
 	
 	//Intializes window, runs main loop until close, then terminates OpenGL context
 	void _windowProgram(
@@ -108,25 +111,17 @@ protected:
 	static void _keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	//callback for cursor position update event
 	static void _cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-	void _enableMouseControls();
-	void _disableMouseControls();
+	void _enableCameraControls();
+	void _disableCameraControls();
 
 public:
-	thread main_thread;
-	BaseViewWindow(
-		int width,
-		int height
-	);
-
-	bool isRunning() { return this->state.is_running;}
-
-	void launch(
-		const char* title,
-		GLFWmonitor* monitor,
-		GLFWwindow* share
-	);
-
+	BaseViewWindow(int width,int height);
+	bool isRunning() { return this->w_state.is_running;}
+	void launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share );
 	void close();
+	void waitForClose();
+
+	
 };
 
 
