@@ -43,16 +43,18 @@ void Camera::init(){
 }
 void Camera::updateUniformData()
 {	
-	mat4 view = (mat4(coord_trans) * _model_pitch * _model_yaw * _world).transpose();
-
-	uint16_t dsize = 2*SIZE_F_MAT4+2;
+	mat4 view = mat4(coord_trans) * _model_pitch * _model_yaw;
+	mat4 worldview = (view * _world).transpose();
+	uint16_t dsize = 2*SIZE_F_MAT4 + 4 + 4 + 2;
 	GLfloat data[dsize];
 
 	// Copy camera data into buffers
-	memcpy(data, view.data(), SIZE_F_MAT4*sizeof(float));
+	memcpy(data, worldview.data(), SIZE_F_MAT4*sizeof(float));
 	memcpy(data + SIZE_F_MAT4, _proj.data(), SIZE_F_MAT4*sizeof(float));
-	data[2*SIZE_F_MAT4] = _near_dist;
-	data[2*SIZE_F_MAT4 + 1] = _far_dist;
+	memcpy(data + 2*SIZE_F_MAT4, vec4(_pos).data(), 4*sizeof(float));
+	memcpy(data + 2*SIZE_F_MAT4 + 3, vec4(view).col(2).data(), 4*sizeof(float));
+	data[2*SIZE_F_MAT4 + 8] = _near_dist;
+	data[2*SIZE_F_MAT4 + 8 + 1] = _far_dist;
 
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 	glBufferData(GL_UNIFORM_BUFFER, dsize*sizeof(float), data, GL_STATIC_DRAW);
