@@ -23,6 +23,8 @@ struct WinState{
 	ControlState control_state = CONTROL_GUI;
 };
 
+
+
 /*Maps or unmaps keys + actions to functions, and holds information regarding the 
 * respective function for a key and action pair. 
 * 
@@ -115,7 +117,7 @@ protected:
 	void _disableCameraControls();
 
 public:
-	BaseViewWindow(int width,int height);
+	BaseViewWindow(const char* title, int width, int height, GLFWmonitor* monitor = NULL, GLFWwindow* share = NULL);
 	bool isRunning() { return this->w_state.is_running;}
 	void launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share );
 	void close();

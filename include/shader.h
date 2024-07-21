@@ -1,14 +1,12 @@
 #pragma once
+#ifndef SHADER_H
+#define SHADER_H
+
 #include <GL/glew.h> 
 #include <GLFW/glfw3.h> 
 #include "matrix.hpp"
 
-#ifndef SHADER_H
-#define SHADER_H
-
-using vec3 = matrix<3, 1, GLfloat>;
-using mat3 = matrix<3, 3, GLfloat>;
-using mat4 = matrix<4, 4, GLfloat>;
+#include "config.h"
 
 class ShaderProgram {
 public:

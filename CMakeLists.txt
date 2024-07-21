@@ -22,7 +22,7 @@ if (IMGUI_FOUND)
         "${IMGUI_INCLUDE_DIR}/backends/imgui_impl_opengl3.cpp")
 endif()
 
-include_directories(include src ../linear-algebra/lib)
+include_directories(include ../linear-algebra/lib)
 
 # Find source files
 file(GLOB SOURCES 

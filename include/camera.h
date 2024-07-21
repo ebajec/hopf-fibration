@@ -1,18 +1,14 @@
 #pragma once
+#ifndef CAMERA_H
+#define CAMERA_H
+
 #include "matrix.h"
+#include "config.h"
 #include "shader.h"
 #include <GL/glew.h> 
 #include <GLFW/glfw3.h> 
 
-#ifndef CAMERA_H
-#define CAMERA_H
 #define PI 3.141592654f
-
-using vec3 = matrix<3, 1, GLfloat>;
-using vec2 = matrix<2, 1, GLfloat>;
-using vec4 = matrix<4, 1, GLfloat>;
-using mat3 = matrix<3, 3, GLfloat>;
-using mat4 = matrix<4, 4, GLfloat>;
 
 struct Camera {
 public:

@@ -1,23 +1,36 @@
 #include "view_window.h"
 
 BaseViewWindow::BaseViewWindow(
-	int width,
-	int height
+	const char* title, int width, int height, GLFWmonitor* monitor, GLFWwindow* share
 ) : w_width(width), w_height(height) {
 
 	/************** SET UP KEYBINDS **************/
 
-	//map_keys is to condense things
 	auto map_movement = [this](int action) {
 		//mval determines whether motion in a direction should start or stop
-		int mval = (action == GLFW_PRESS) - (action == GLFW_RELEASE);
+		int mval = 0;
+		switch (action)
+		{
+			case GLFW_PRESS:   mval =  1; break;
+			case GLFW_RELEASE: mval = -1; break;
+		}
+
 		vec3& dir = this->w_cam_manager.cam_motion_dir;
-		this->w_key_manager.mapKey(GLFW_KEY_W, action, [&dir, mval]() {*dir[2] += +mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_A, action, [&dir, mval]() {*dir[0] += -mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_S, action, [&dir, mval]() {*dir[2] += -mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_D, action, [&dir, mval]() {*dir[0] += +mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_LEFT_SHIFT, action, [&dir, mval]() {*dir[1] += -mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_SPACE, action, [&dir, mval]() {*dir[1] += mval; });};
+
+		this->w_key_manager.mapKey(GLFW_KEY_W, action, 
+			[&dir, mval]() {*dir[2] += +mval; });
+		this->w_key_manager.mapKey(GLFW_KEY_A, action, 
+			[&dir, mval]() {*dir[0] += -mval; });
+		this->w_key_manager.mapKey(GLFW_KEY_S, action, 
+			[&dir, mval]() {*dir[2] += -mval; });
+		this->w_key_manager.mapKey(GLFW_KEY_D, action, 
+			[&dir, mval]() {*dir[0] += +mval; });
+		this->w_key_manager.mapKey(GLFW_KEY_LEFT_SHIFT, action, 
+			[&dir, mval]() {*dir[1] += -mval; });
+		this->w_key_manager.mapKey(GLFW_KEY_SPACE, action, 
+			[&dir, mval]() {*dir[1] += mval; });
+	};
+
 	map_movement(GLFW_PRESS);
 	map_movement(GLFW_RELEASE);
 
@@ -29,7 +42,7 @@ BaseViewWindow::BaseViewWindow(
 			_disableCameraControls(); 
 			w_state.control_state = WinState::CONTROL_GUI;
 		}
-		else 
+		else  
 		{
 			_enableCameraControls(); 
 			w_state.control_state = WinState::CONTROL_CAMERA;
@@ -44,6 +57,8 @@ BaseViewWindow::BaseViewWindow(
 		w_height,
 		PI / 4);
 	w_cam_manager.attach(&w_cam);
+
+	this->launch(title,monitor,share);
 }
 
 void BaseViewWindow::launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share)
@@ -151,9 +166,9 @@ void BaseViewWindow::_disableCameraControls()
 
 void KeyManager::callKeyFunc(int key, int action)
 {
-	pair<int, int> keyaction({ key,action });
+	pair<int, int> operation({ key,action });
 
-	if (keymap.contains(keyaction)) keymap.at(keyaction)();
+	if (keymap.contains(operation)) keymap.at(operation)();
 
 	return;
 }

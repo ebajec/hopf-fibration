@@ -16,13 +16,13 @@ layout (std140) uniform Camera {
 
 float PI = 3.141592654;
 
+
 vec4 calc_light(vec3 light, vec4 color) {
     vec3 light_ray = normalize(light - fpos);
     vec3 view_dir = normalize(vec3(cam_pos)-fpos);
-    float diffuse = max(dot(fnormal,light_ray),0);
-
+    float diffuse = max(dot(fnormal,light_ray),0.0f);
     vec3 reflect_dir = reflect(-light_ray,fnormal);
-    float spec = pow(max(dot(view_dir,reflect_dir),0),32);
+    float spec = pow(max(dot(view_dir,reflect_dir),0.0f),32);
 
     return (diffuse + 0.2) * color + spec*vec4(1);
 }
@@ -37,7 +37,6 @@ void main()
 { 
 
     vec4 color =    calc_light(vec3(5,5,5),fcolor)
-                +   calc_light(vec3(5,8,-8),fcolor)
-                ;
+                +   calc_light(vec3(5,8,-8),fcolor);
     FragColor = color;
 } 
