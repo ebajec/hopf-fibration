@@ -3,7 +3,7 @@
 #define CAMERA_H
 
 #include "matrix.h"
-#include "config.h"
+#include "defines.h"
 #include "shader.h"
 #include <GL/glew.h> 
 #include <GLFW/glfw3.h> 
@@ -24,7 +24,7 @@ public:
 	);
 	void init();
 	void updateUniformData();
-	bool bindToShader(ShaderProgram shader,const char* name, int binding);
+	bool bindToShader(Shader shader,const char* name, int binding);
 	void rotate(float pitch, float yaw);
 	void setScreenRatio(int w, int h); 	// Adjusts projection matrix to account for screen ratio.
 	void translate(vec3 delta);			// Moves camera in direction delta. 

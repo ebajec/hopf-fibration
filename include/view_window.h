@@ -23,8 +23,6 @@ struct WinState{
 	ControlState control_state = CONTROL_GUI;
 };
 
-
-
 /*Maps or unmaps keys + actions to functions, and holds information regarding the 
 * respective function for a key and action pair. 
 * 
@@ -55,7 +53,7 @@ private:
 	Camera* cam;
 	vec2 cursor_pos = { 0,0 };
 
-	void _update_loop(WinState* state);
+	void updateThread(WinState* state);
 public:
 
 	/*Camera will move in this direction each camera update. Camera::translate()
@@ -89,41 +87,40 @@ public:
 *
 */
 class BaseViewWindow {
-protected:
-	int w_height;
-	int w_width;
-
-	GLFWwindow* window = NULL;
-	WinState w_state;
-	thread w_main_thread;
-	Camera w_cam;
-	KeyManager w_key_manager;
-	CameraManager w_cam_manager;
-	
-	//Intializes window, runs main loop until close, then terminates OpenGL context
-	void _windowProgram(
-		const char* title,
-		GLFWmonitor* monitor,
-		GLFWwindow* share);
-
-	//Main loop of program. 
-	virtual void _main() = 0;
-
-	//callback for keyboard input event
-	static void _keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-	//callback for cursor position update event
-	static void _cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-	void _enableCameraControls();
-	void _disableCameraControls();
 
 public:
 	BaseViewWindow(const char* title, int width, int height, GLFWmonitor* monitor = NULL, GLFWwindow* share = NULL);
+	~BaseViewWindow();
 	bool isRunning() { return this->w_state.is_running;}
 	void launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share );
 	void close();
 	void waitForClose();
 
-	
+protected:
+	//Intializes window, runs main loop until close, then terminates OpenGL context
+	void windowProgram(
+		const char* title,
+		GLFWmonitor* monitor,
+		GLFWwindow* share);
+
+	//Main loop of program. 
+	virtual void _main() {};
+
+	//callback for keyboard input event
+	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	//callback for cursor position update event
+	static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+	void enableCameraControls();
+	void disableCameraControls();
+
+	int w_height;
+	int w_width;
+
+	GLFWwindow* window = NULL;
+	WinState w_state;
+	Camera w_cam;
+	KeyManager w_key_manager;
+	CameraManager w_cam_manager;
 };
 
 

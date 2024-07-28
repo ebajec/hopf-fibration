@@ -1,5 +1,5 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef DEFINES_H
+#define DEFINES_H
 
 #include "matrix.h"
 #include <GL/glew.h>
@@ -16,6 +16,14 @@
 
 #define HF_CAMERA_BINDING 1
 #define C_CAMERA_BINDING 0
+
+#ifndef PI
+    #define PI 3.141592654f
+#endif
+
+#ifndef ROOT2
+    #define ROOT2 1.4142135623f
+#endif 
 
 typedef matrix<4,1,GLfloat> vec4;
 typedef matrix<3,1,GLfloat> vec3;

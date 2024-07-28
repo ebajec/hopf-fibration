@@ -1,15 +1,45 @@
+
+
+#include "simulation.h"
+#include "misc.h"
+#include "defines.h"
+
+/**********************************************************************************
+ * 
+ * Implementation details for SphereController
+ * 
+ **********************************************************************************/
+PointController::PointController()
+{
+    sphere = new Sphere(SPHERE_SIZE,SPHERE_SIZE,vec3{1,0,0});
+    points = vector<vec3>(SCOUNT);
+    for (int i = 0; i < SCOUNT; i++) 
+        points[i] = S2(uRand()*2*PI,uRand()*PI);
+    sphere->setScale(0.07f);
+}
+
+void PointController::render(Shader& shader)
+{   
+    for (int i = 0; i < SCOUNT; i++) 
+    {
+        sphere->setPos(vec3(geometry*vec4(points[i])));   
+        sphere->render(shader);
+    }
+}
+void PointController::transform(mat4 trans) 
+{
+    geometry = geometry*trans;
+}
+
+
 /**********************************************************************************
  * 
  * Implementation details for HopfSimulation.
  * 
  **********************************************************************************/
-
-#include "simulation.h"
-#include "misc.h"
-#include "config.h"
-
 HopfSimulation::HopfSimulation(const char* title, int width, int height) : BaseViewWindow(title, width, height,NULL,NULL) 
 {
+    _main();
 }
 HopfSimulation::~HopfSimulation() {
     glDeleteBuffers(1,&hf_vbo_in);
@@ -24,10 +54,10 @@ bool HopfSimulation::initShaders() {
 
     // Initialize main shader and camera
 
-    if(!hf_main_shader.addShader("../shader/main.vert",GL_VERTEX_SHADER)||
-       !hf_main_shader.addShader("../shader/main.frag",GL_FRAGMENT_SHADER))
+    if(!hf_main_shader.addShader("../shader/default_camera.vert",GL_VERTEX_SHADER)||
+       !hf_main_shader.addShader("../shader/default_color.frag",GL_FRAGMENT_SHADER))
         return false;
-    hf_main_shader.link();
+    hf_main_shader.linkProgram();
 
     if (!w_cam.bindToShader(hf_main_shader,"Camera",HF_CAMERA_BINDING)) return false;
 
@@ -37,14 +67,14 @@ bool HopfSimulation::initShaders() {
         return false;
     const GLchar* hf_feedback_varyings[] = { "data_out" };
     glTransformFeedbackVaryings(hf_map.program, 1, hf_feedback_varyings, GL_INTERLEAVED_ATTRIBS);
-    hf_map.link();
+    hf_map.linkProgram();
 
     // Initialize control window shader and camera
 
     if (!c_shader.addShader("../shader/control_viewport.vert",GL_VERTEX_SHADER)||
         !c_shader.addShader("../shader/control_viewport.frag",GL_FRAGMENT_SHADER))
         return false;
-    c_shader.link();
+    c_shader.linkProgram();
 
     if (!c_cam->bindToShader(c_shader,"Camera",C_CAMERA_BINDING)) return false;
     
@@ -80,14 +110,14 @@ bool HopfSimulation::initControllerData()
 {
     c_cam = new Camera(vec3({-1,0,0}),vec3({2,0,0}),CONTROL_VIEWPORT_SIZE,CONTROL_VIEWPORT_SIZE,PI/4);
     c_sphere = new Sphere(128,128);
-    m_controller = new SphereController();
+    m_controller = new PointController();
 
     c_cam->init();
     return true;
 }
 void HopfSimulation::renderFibers() 
 {
-    hf_map.use();
+    hf_map.useProgram();
     hf_map.setUniform("ANIM_SPEED",hf_anim_speed);
     hf_map.setUniform("TIME_S",(float)glfwGetTime());
 
@@ -119,7 +149,7 @@ void HopfSimulation::renderFibers()
     w_cam.updateUniformData();
 
     glDepthMask(GL_TRUE);
-    hf_main_shader.use();
+    hf_main_shader.useProgram();
     glMultiDrawArrays(GL_LINE_LOOP,hf_draw_firsts,hf_draw_counts,hf_draw_max);
 
 }
@@ -149,6 +179,10 @@ void HopfSimulation::renderUI()
 }
 void HopfSimulation::_main()
 {
+    printf("-----------------------------\n");
+    printf("Press ESC to toggle GUI access\n");
+    printf("Use WASD and mouse to move\n");
+
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

@@ -89,13 +89,13 @@
     delete[] data_color;
     return;
 }
-void Sphere::render(ShaderProgram& shader) {
+void Sphere::render(Shader& shader) {
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 
-    shader.use();
+    shader.useProgram();
     shader.setUniform("obj_geometry",geometry,GL_TRUE);
     shader.setUniform("scale",scale);
     glBindVertexArray(vao);
@@ -128,29 +128,3 @@ void Sphere::rotate(vec3 axis, GLfloat angle)
     return;
 } 
 
-/**********************************************************************************
- * 
- * Implementation details for SphereController
- * 
- **********************************************************************************/
-SphereController::SphereController()
-{
-    sphere = new Sphere(SPHERE_SIZE,SPHERE_SIZE,vec3{1,0,0});
-    points = vector<vec3>(SCOUNT);
-    for (int i = 0; i < SCOUNT; i++) 
-        points[i] = S2(uRand()*2*PI,uRand()*PI);
-    sphere->setScale(0.07f);
-}
-
-void SphereController::render(ShaderProgram& shader)
-{   
-    for (int i = 0; i < SCOUNT; i++) 
-    {
-        sphere->setPos(vec3(geometry*vec4(points[i])));   
-        sphere->render(shader);
-    }
-}
-void SphereController::transform(mat4 trans) 
-{
-    geometry = geometry*trans;
-}

@@ -39,12 +39,12 @@ BaseViewWindow::BaseViewWindow(
 	{ 
 		if (w_state.control_state == WinState::CONTROL_CAMERA) 
 		{
-			_disableCameraControls(); 
+			disableCameraControls(); 
 			w_state.control_state = WinState::CONTROL_GUI;
 		}
 		else  
 		{
-			_enableCameraControls(); 
+			enableCameraControls(); 
 			w_state.control_state = WinState::CONTROL_CAMERA;
 		}
 	});
@@ -58,33 +58,6 @@ BaseViewWindow::BaseViewWindow(
 		PI / 4);
 	w_cam_manager.attach(&w_cam);
 
-	this->launch(title,monitor,share);
-}
-
-void BaseViewWindow::launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share)
-{
-	w_main_thread = std::thread(&BaseViewWindow::_windowProgram, this, title, monitor, share);
-
-	// Do nothing until done initializing
-	while(!isRunning()){}
-
-	return;
-}
-
-void BaseViewWindow::close()
-{
-	glfwSetWindowShouldClose(window, true);
-	return;
-}
-
-void BaseViewWindow::waitForClose()
-{
-	w_main_thread.join();
-	return;
-}
-
-void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLFWwindow* share)
-{
 	window = glfwCreateWindow(w_width, w_height, title, monitor, share);
 	if (!window) {
 		fprintf(stderr, "ERROR: could not open window with GLFW3\n");
@@ -98,8 +71,8 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	glewInit();
 
 	glfwSetWindowUserPointer(window, this);
-	glfwSetKeyCallback(window, _keyCallback);
-	glfwSetCursorPosCallback(window, _cursorPosCallback);
+	glfwSetKeyCallback(window, keyCallback);
+	glfwSetCursorPosCallback(window, cursorPosCallback);
 	
 	const GLubyte* _renderer = glGetString(GL_RENDERER);
 	const GLubyte* _version = glGetString(GL_VERSION);
@@ -109,24 +82,24 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	w_cam.init();
 	w_state.is_running = true;
 	w_cam_manager.start(&this->w_state);
+}
 
-	_main();
-
-	_disableCameraControls();
+BaseViewWindow::~BaseViewWindow()
+{
+	disableCameraControls();
 	w_cam_manager.stop();
 	w_state.is_running = false;
 	glfwDestroyWindow(window);
-	return;
 }
 
-void BaseViewWindow::_keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void BaseViewWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	auto win = static_cast<BaseViewWindow*>(glfwGetWindowUserPointer(window));
 
 	win->w_key_manager.callKeyFunc(key, action);
 }
 
-void BaseViewWindow::_cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+void BaseViewWindow::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 {
 	auto win = static_cast<BaseViewWindow*>(glfwGetWindowUserPointer(window));
 	int width, height;
@@ -141,7 +114,7 @@ void BaseViewWindow::_cursorPosCallback(GLFWwindow* window, double xpos, double 
 	}	
 }
 
-void BaseViewWindow::_enableCameraControls()
+void BaseViewWindow::enableCameraControls()
 {
 	//Center cursor so camera does not jerk
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -154,7 +127,7 @@ void BaseViewWindow::_enableCameraControls()
 	return;
 }
 
-void BaseViewWindow::_disableCameraControls()
+void BaseViewWindow::disableCameraControls()
 {
 	w_state.control_state = WinState::CONTROL_GUI;
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -177,7 +150,7 @@ void CameraManager::attach(Camera* in_cam) {
 	this->cam = in_cam;
 }
 
-void CameraManager::_update_loop(WinState* state)
+void CameraManager::updateThread(WinState* state)
 {
 	while (true) {
 		if (!state->is_running) return;
@@ -191,7 +164,7 @@ void CameraManager::start(WinState* state)
 {
 	cam_motion_dir = { 0,0,0 };
 	cursor_pos = { 0,0 };
-	updater = thread(&CameraManager::_update_loop, this, state);
+	updater = thread(&CameraManager::updateThread, this, state);
 	return;
 }
 

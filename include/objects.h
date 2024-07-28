@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
-#include "config.h"
+#include "defines.h"
 #include "matrix.h"
 #include "shader.h"
 
@@ -23,7 +23,7 @@ public:
     void setScale(GLfloat s);
     void setPos(vec3 pos);
     void rotate(vec3 axis, GLfloat angle);
-    void render(ShaderProgram& shader);
+    void render(Shader& shader);
     
     enum ATTRIBUTES {POSITION,COLOR,NORMAL};
 private:
@@ -40,24 +40,6 @@ private:
 };
 
 
-/**********************************************************************************
- * 
- * Control sphere manager
- * 
- **********************************************************************************/
-#define SPHERE_SIZE 128
-#define SCOUNT 100
-class SphereController{
-public:
-    SphereController();
-    void render(ShaderProgram& shader);
-    void transform(mat4 trans);
-private:
 
-    mat4 geometry = mat4::id();
-    std::vector<vec3> points;
-    Sphere* sphere;
-
-};
 
 #endif

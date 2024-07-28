@@ -8,12 +8,7 @@ int main()
 	}
 
     HopfSimulation sim("Hopf Simulation", WIDTH,HEIGHT);
-
-    printf("-----------------------------\n");
-    printf("Press ESC to toggle GUI access\n");
-    printf("Use WASD and mouse to move\n");
-
-    sim.waitForClose();
+    
     glfwTerminate();
     return 0;
 }

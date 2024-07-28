@@ -6,15 +6,14 @@
 #include <GLFW/glfw3.h> 
 #include "matrix.hpp"
 
-#include "config.h"
+#include "defines.h"
 
-class ShaderProgram {
+class Shader {
 public:
-	ShaderProgram() {}
-	ShaderProgram(const char* path, GLuint type);
+	Shader(){}
 	bool addShader(const char* path, GLuint type);
-	void use() const { glUseProgram(program); }
-	bool link();
+	void useProgram() const { glUseProgram(program); }
+	bool linkProgram();
 
 	void setUniform(const char* name, int value);
 	void setUniform(const char* name, unsigned int value);
@@ -25,19 +24,12 @@ public:
 
 	GLint getUniform(const char* name) const { return glGetUniformLocation(program, name); }
 
+	bool isLinked() {return initialized;}
 	GLuint program;
-
-	bool initialized = false;
 protected:
-
-	bool _compileShader(GLenum type, const char* source);
-
-	//create shader program
-	void _init() { 
-		initialized = true;
-		program = glCreateProgram(); 
-		}
-
+	bool initialized = false;
+	void init();
+	bool compileShader(GLenum type, const char* source);
 };
 
 #endif

@@ -29,22 +29,16 @@ inline string read_text_file(const char* src){
 	return text;
 }
 
-/*
-	Creates shader with source from path and specified type.  Automatically links
-	program, so if multipe shaders are needed use addShader() and link().
-*/
-ShaderProgram::ShaderProgram(
-const char* path, GLuint type) {
-	_init();
-	addShader(path,type);
-	glLinkProgram(program);
+void Shader::init()
+{
+	if (!initialized)
+		program = glCreateProgram();
+	initialized = true;
 }
 
-bool ShaderProgram::addShader(const char *path, GLuint type)
+bool Shader::addShader(const char *path, GLuint type)
 {
-	if (!initialized) {
-		_init();
-	}
+	init();
 	string source = read_text_file(path);
 
 	if (source == "") {
@@ -54,12 +48,13 @@ bool ShaderProgram::addShader(const char *path, GLuint type)
 	}
 	
 	//compile shaders
-	if(!_compileShader(type, source.c_str()))
+	if(!compileShader(type, source.c_str()))
 		return false;
 	return true;
 }
 
-bool ShaderProgram::link() {
+bool Shader::linkProgram() {
+	
 	glLinkProgram(program);
 	GLint success = 0;
 	glGetShaderiv(program, GL_LINK_STATUS, &success);
@@ -73,39 +68,41 @@ bool ShaderProgram::link() {
 		printf(&error_message[0]);
 		return false;
 	}
+
+	initialized = true;
 	return true;
 }
 
-void ShaderProgram::setUniform(const char* name, int value)
+void Shader::setUniform(const char* name, int value)
 {
 	glUniform1i(this->getUniform(name), value);
 }
 
-void ShaderProgram::setUniform(const char* name, unsigned int value) {
+void Shader::setUniform(const char* name, unsigned int value) {
 	glUniform1ui(this->getUniform(name), value);
 }
 
-void ShaderProgram::setUniform(const char* name, float value)
+void Shader::setUniform(const char* name, float value)
 {
 	glUniform1f(this->getUniform(name), value);
 }
 
-void ShaderProgram::setUniform(const char* name, vec3 value)
+void Shader::setUniform(const char* name, vec3 value)
 {
 	glUniform3fv(this->getUniform(name), 1, value.data());
 }
 
-void ShaderProgram::setUniform(const char* name, mat3 value, GLboolean transpose)
+void Shader::setUniform(const char* name, mat3 value, GLboolean transpose)
 {
 	glUniformMatrix3fv(this->getUniform(name), 1, transpose, value.data());
 }
 
-void ShaderProgram::setUniform(const char* name, mat4 value, GLboolean transpose)
+void Shader::setUniform(const char* name, mat4 value, GLboolean transpose)
 {
 	glUniformMatrix4fv(this->getUniform(name), 1, transpose, value.data());
 }
 
-bool ShaderProgram::_compileShader(GLenum type, const char* source)
+bool Shader::compileShader(GLenum type, const char* source)
 {
 	GLuint s = glCreateShader(type);
 	glShaderSource(s, 1, &source, NULL);

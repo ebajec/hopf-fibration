@@ -8,11 +8,32 @@
 #include "backends/imgui_impl_opengl3.h"
 #include "matrix.h"
 
-#include "config.h"
+#include "defines.h"
 
 #include "objects.h"
 #include "view_window.h"
 #include "shader.h"
+
+
+/**********************************************************************************
+ * 
+ * Control sphere manager
+ * 
+ **********************************************************************************/
+#define SPHERE_SIZE 128
+#define SCOUNT 100
+class PointController{
+public:
+    PointController();
+    void render(Shader& shader);
+    void transform(mat4 trans);
+private:
+
+    mat4 geometry = mat4::id();
+    std::vector<vec3> points;
+    std::vector<vec3> pointColors;
+    Sphere* sphere;
+};
 
 /**********************************************************************************
  * 
@@ -38,13 +59,15 @@ protected:
     void renderControlSphere();
     void renderUI();
 
-    SphereController* m_controller;
+    PointController* m_controller;
     Camera* c_cam;
     Sphere* c_sphere;
 
-    ShaderProgram c_shader;
-    ShaderProgram hf_main_shader;                   // Handles rendering of main scene 
-    ShaderProgram hf_map;                           // Computes fibers of hopf map
+    Shader c_shader;
+    Shader hf_main_shader;                   // Handles rendering of main scene 
+    Shader hf_map;                           // Computes fibers of hopf map
+
+    int poop;
 
     GLuint hf_vao;                               
     GLuint hf_vbo_in; 
@@ -55,5 +78,8 @@ protected:
     float hf_anim_speed;                         
     int hf_draw_max = FIBER_COUNT;                  // Parameter to control number of drawn circles
 };
+
+
+
 
 #endif

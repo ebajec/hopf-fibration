@@ -62,7 +62,7 @@ void Camera::updateUniformData()
 
 	return;
 }
-bool Camera::bindToShader(ShaderProgram shader, const char* name, int binding) {
+bool Camera::bindToShader(Shader shader, const char* name, int binding) {
 	GLuint index = glGetUniformBlockIndex(shader.program,name);
 	if (index == GL_INVALID_INDEX) {
 		printf("Uniform block index for ");

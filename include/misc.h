@@ -1,8 +1,10 @@
 #ifndef MISC_H
 #define MISC_H
 
+#include <GL/glew.h>
 #include <vector>
 #include "matrix.h"
+#include "defines.h"
 
 #define PI 3.141592654f
 #define ROOT2 1
@@ -16,6 +18,25 @@ static inline vec3 S2(GLfloat phi, GLfloat theta)
 {
     return vec3{sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
 }
+
+static inline bool isFloat(GLenum type)
+{
+    return 
+        type == GL_FLOAT      ||
+        type == GL_HALF_FLOAT ||
+        type == GL_FIXED;     
+}
+static bool isIntegral(GLenum type)
+{
+    return 
+        type == GL_INT            ||
+        type == GL_BYTE           ||
+        type == GL_SHORT          ||
+        type == GL_UNSIGNED_INT   ||
+        type == GL_UNSIGNED_BYTE  ||
+        type == GL_UNSIGNED_SHORT;
+}
+
 static inline void printData(GLfloat* data, int x, int y) 
 {
     for (int i = 0; i < x; i++) {
