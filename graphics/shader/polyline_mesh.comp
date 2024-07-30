@@ -1,0 +1,173 @@
+#version 430 core
+
+uniform uint numLines;
+uniform uint lineDetail;
+
+layout (local_size_x = 32, local_size_y = 16, local_size_z = 1) in;
+
+struct LineData 
+{
+    vec4 position;
+    vec4 color;
+};
+
+// Input data for each polyline. Indexed by x invocation id.
+layout (std430, binding = 0) buffer InputData
+{
+    LineData lineInput[];
+};
+
+struct InstanceData
+{
+    float width;
+    uint size;
+    uint firstOffset;
+    uint padding;
+};
+
+// Data for each polyline instance, required to correctly access input
+// and calculate mesh points. Indexed by the z invocation id.
+layout (std430, binding = 1) buffer instanceData
+{
+    InstanceData instance[];
+};
+
+struct FrameData
+    {
+        vec4 T;  // Tangent 
+        vec4 N;  // Normal    
+        vec4 B;  // Binormal
+    };
+
+// Tangent frames for each point on each polyline. Indexed by x invocation id.
+layout (std430, binding = 2) buffer frameData
+{   
+    FrameData frames[];
+};
+
+struct Vertex 
+{
+    vec4 position;
+    vec4 normal;
+    vec4 color;
+};
+
+// Output for mesh data. Indexed by x and y invocation ids.
+layout (std430, binding = 3) buffer outputMesh
+{
+    Vertex vertices[];
+};
+
+layout (std430, binding = 4) buffer outputIndices
+{
+    uint indices[];
+};
+
+// Function to calculate the intersection point of a line and a plane
+vec3 linePlaneIntersect(vec3 linePoint, vec3 lineDir, vec3 planePoint, vec3 planeNormal) {
+    float denom = dot(planeNormal, lineDir);
+
+    // Check if the line is parallel to the plane
+    if (abs(denom) < 1e-6)
+        return vec3(1e6, 1e6, 1e6);
+    
+    // Calculate the distance along the line direction to the intersection point
+    float t = dot(planePoint - linePoint, planeNormal) / denom;
+    
+    return linePoint + t * lineDir;
+}
+
+uvec2 getSegIndices(uint idx, uint size) {
+    uint x = (idx == size - 1) ? size - 2 : idx;
+    uint y = (idx == size - 1) ? size - 1 : idx + 1;
+
+    return uvec2(x, y);
+}
+
+void main() {
+    uvec3 id = gl_GlobalInvocationID;
+
+    if (id.z >= numLines)
+        return;
+
+    uint lineSize  = instance[id.z].size;
+    uint offset = instance[id.z].firstOffset;
+    float width = instance[id.z].width;
+
+    if (id.x >= lineSize)
+        return;
+    if (id.y >= lineDetail)
+        return;
+
+    // Compute normalized direction for each segment
+    if (id.y == 0)
+    {  
+        uvec2 seg = getSegIndices(id.x, lineSize);
+        seg += uvec2(offset, offset);
+
+        vec4 A = lineInput[seg.x].position;
+        vec4 B = lineInput[seg.y].position;
+
+        vec4 dir = normalize(B - A);
+
+        frames[offset + id.x].T = dir;
+    }
+
+    barrier();
+
+
+    // Could also be done on CPU
+    if (id.x == 0 && id.y == 0)
+    {
+        // Compute tangent frame for each line. Must be done sequentially.
+        vec3 curDir = frames[offset].T.xyz;
+        vec3 temp = vec3 (-12.3,1.213,1);
+
+        vec3 N = width * normalize(cross(temp, curDir));
+        vec3 B = cross(N, curDir);
+
+        for (uint i = 0; i < lineSize; i++) {
+            frames[i].N = vec4(N, 0.0);
+            frames[i].B = vec4(B, 0.0);
+
+            curDir = frames[i].T.xyz;
+
+            // Get normal to plane bisecting this segment and the next.
+            uvec2 seg = getSegIndices(i, lineSize);
+            seg += uvec2(offset,offset);
+
+            vec3 bisector = normalize(frames[seg.x].T.xyz - frames[seg.y].T.xyz);
+            vec3 curPos =  lineInput[seg.x].position.xyz;
+            vec3 nextPos = lineInput[seg.y].position.xyz;
+
+            N = linePlaneIntersect(curPos + N, curDir, nextPos, bisector) - nextPos;
+            B = linePlaneIntersect(curPos + B, curDir, nextPos, bisector) - nextPos;
+        }
+    }
+    
+    barrier();
+
+    // Compute mesh vertices for each line, in parallel.
+    float t = float(id.y) / float(lineDetail);
+
+    vec3 pos = lineInput[id.x].position.xyz;
+    vec3 offsetVec = cos(t) * frames[id.x].N.xyz + sin(t) * frames[id.x].B.xyz;
+
+    uint curIndex = lineDetail*(offset + id.x) + id.y;
+
+    vertices[curIndex].normal = vec4(normalize(offsetVec), 0.0);
+    vertices[curIndex].position = vec4(pos + offsetVec, 1.0);
+
+    // offset for position in index buffer
+    curIndex = 6*curIndex;
+
+    uvec2 idNext = uvec2(mod(id.x + 1,lineSize),mod(id.y + 1,lineDetail));
+
+    indices[curIndex++] = id.x     * lineDetail + id.y;
+    indices[curIndex++] = id.x     * lineDetail + idNext.y;
+    indices[curIndex++] = idNext.x * lineDetail + idNext.y;
+
+    indices[curIndex++] = id.x     * lineDetail + id.y;
+    indices[curIndex++] = idNext.x * lineDetail + idNext.y;
+    indices[curIndex++] = idNext.x * lineDetail + id.y;
+}

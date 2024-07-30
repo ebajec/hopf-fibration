@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef VIEW_WINDOW_H
-#define VIEW_WINDOW_H
+#ifndef GLFW_WINDOW_H
+#define GLFW_WINDOW_H
 #include <GL/glew.h> 
 #include <GLFW/glfw3.h>
 #include <thread>
@@ -80,18 +80,13 @@ public:
 * Provides a base for creating windows with GLFW.  Natively handles keyboard
 * input, mouse input, and camera controls.  By default, moves camera with WASD
 * and mouse.  
-* 
-* IMPORTANT: The pure virtual function "_main()" is meant to contain the body 
-* of the program running in the window.  Some initialization is done before this
-* is called.  
-*
 */
 class BaseViewWindow {
 
 public:
 	BaseViewWindow(const char* title, int width, int height, GLFWmonitor* monitor = NULL, GLFWwindow* share = NULL);
 	~BaseViewWindow();
-	bool isRunning() { return this->w_state.is_running;}
+	bool isRunning() { return this->m_state.is_running;}
 	void launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share );
 	void close();
 	void waitForClose();
@@ -104,23 +99,25 @@ protected:
 		GLFWwindow* share);
 
 	//Main loop of program. 
-	virtual void _main() {};
+	virtual void windowLoop() {};
 
 	//callback for keyboard input event
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 	//callback for cursor position update event
 	static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+	
 	void enableCameraControls();
 	void disableCameraControls();
 
-	int w_height;
-	int w_width;
+	int m_height;
+	int m_width;
 
-	GLFWwindow* window = NULL;
-	WinState w_state;
-	Camera w_cam;
-	KeyManager w_key_manager;
-	CameraManager w_cam_manager;
+	GLFWwindow* m_window = NULL;
+	WinState m_state;
+	Camera m_camera;
+	KeyManager m_keyManager;
+	CameraManager m_cameraManager;
 };
 
 

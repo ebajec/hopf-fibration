@@ -6,9 +6,6 @@
 #include "matrix.h"
 #include "defines.h"
 
-#define PI 3.141592654f
-#define ROOT2 1
-
 /**********************************************************************************
  * 
  * Helper functions

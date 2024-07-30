@@ -22,15 +22,19 @@ public:
 		GLfloat focus = PI / 3,
 		GLfloat far = 500
 	);
+	
 	void init();
-	void updateUniformData();
-	bool bindToShader(Shader shader,const char* name, int binding);
-	void rotate(float pitch, float yaw);
-	void setScreenRatio(int w, int h); 	// Adjusts projection matrix to account for screen ratio.
-	void translate(vec3 delta);			// Moves camera in direction delta. 
 	void reset();
+
+	void updateUniformData();
+	void bindUbo(GLuint binding);
+
+	void rotate(float pitch, float yaw);
+	void translate(vec3 delta);			// Moves camera in direction delta.
+	
 	vec3 pos() {return  (_pos - basis[2]*_near_dist);}
 	vec3 coord(int i){return mat3(_model_pitch * _model_yaw)* basis[i];}
+	void setScreenRatio(int w, int h); 	// Adjusts projection matrix to account for screen ratio.
 
 
 	GLuint ubo;

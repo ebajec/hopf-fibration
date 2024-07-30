@@ -1,8 +1,8 @@
-#include "view_window.h"
+#include "window.h"
 
 BaseViewWindow::BaseViewWindow(
 	const char* title, int width, int height, GLFWmonitor* monitor, GLFWwindow* share
-) : w_width(width), w_height(height) {
+) : m_width(width), m_height(height) {
 
 	/************** SET UP KEYBINDS **************/
 
@@ -15,19 +15,19 @@ BaseViewWindow::BaseViewWindow(
 			case GLFW_RELEASE: mval = -1; break;
 		}
 
-		vec3& dir = this->w_cam_manager.cam_motion_dir;
+		vec3& dir = this->m_cameraManager.cam_motion_dir;
 
-		this->w_key_manager.mapKey(GLFW_KEY_W, action, 
+		this->m_keyManager.mapKey(GLFW_KEY_W, action, 
 			[&dir, mval]() {*dir[2] += +mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_A, action, 
+		this->m_keyManager.mapKey(GLFW_KEY_A, action, 
 			[&dir, mval]() {*dir[0] += -mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_S, action, 
+		this->m_keyManager.mapKey(GLFW_KEY_S, action, 
 			[&dir, mval]() {*dir[2] += -mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_D, action, 
+		this->m_keyManager.mapKey(GLFW_KEY_D, action, 
 			[&dir, mval]() {*dir[0] += +mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_LEFT_SHIFT, action, 
+		this->m_keyManager.mapKey(GLFW_KEY_LEFT_SHIFT, action, 
 			[&dir, mval]() {*dir[1] += -mval; });
-		this->w_key_manager.mapKey(GLFW_KEY_SPACE, action, 
+		this->m_keyManager.mapKey(GLFW_KEY_SPACE, action, 
 			[&dir, mval]() {*dir[1] += mval; });
 	};
 
@@ -35,68 +35,72 @@ BaseViewWindow::BaseViewWindow(
 	map_movement(GLFW_RELEASE);
 
 	// Press ESC to enable or disable camera controls
-	w_key_manager.mapKey(GLFW_KEY_ESCAPE, GLFW_PRESS, [this]()
+	m_keyManager.mapKey(GLFW_KEY_ESCAPE, GLFW_PRESS, [this]()
 	{ 
-		if (w_state.control_state == WinState::CONTROL_CAMERA) 
+		if (m_state.control_state == WinState::CONTROL_CAMERA) 
 		{
 			disableCameraControls(); 
-			w_state.control_state = WinState::CONTROL_GUI;
+			m_state.control_state = WinState::CONTROL_GUI;
 		}
 		else  
 		{
 			enableCameraControls(); 
-			w_state.control_state = WinState::CONTROL_CAMERA;
+			m_state.control_state = WinState::CONTROL_CAMERA;
 		}
 	});
 
 	/************** SET UP CAMERA **************/
-	w_cam = Camera(
+	m_camera = Camera(
 		vec3({ -1,0,0 }),
 		vec3({ 10,0,0 }),
-		w_width,
-		w_height,
+		m_width,
+		m_height,
 		PI / 4);
-	w_cam_manager.attach(&w_cam);
+	m_cameraManager.attach(&m_camera);
 
-	window = glfwCreateWindow(w_width, w_height, title, monitor, share);
-	if (!window) {
+
+	// Create glfw context
+
+	m_window = glfwCreateWindow(m_width, m_height, title, monitor, share);
+	if (!m_window) {
 		fprintf(stderr, "ERROR: could not open window with GLFW3\n");
 		glfwTerminate();
 	}
-	glfwMakeContextCurrent(window);
-	glfwSetWindowPos(window,0,0);
+	glfwMakeContextCurrent(m_window);
+	glfwSetWindowPos(m_window,0,0);
 
 	// start GLEW extension handler
 	glewExperimental = GL_TRUE;
 	glewInit();
 
-	glfwSetWindowUserPointer(window, this);
-	glfwSetKeyCallback(window, keyCallback);
-	glfwSetCursorPosCallback(window, cursorPosCallback);
+	glfwSetWindowUserPointer(m_window, this);
+	glfwSetKeyCallback(m_window, keyCallback);
+	glfwSetCursorPosCallback(m_window, cursorPosCallback);
 	
 	const GLubyte* _renderer = glGetString(GL_RENDERER);
 	const GLubyte* _version = glGetString(GL_VERSION);
+
 	printf("Renderer: %s\n", _renderer);
 	printf("OpenGL version supported %s\n", _version);
 
-	w_cam.init();
-	w_state.is_running = true;
-	w_cam_manager.start(&this->w_state);
+	m_camera.init();
+	m_state.is_running = true;
+	m_cameraManager.start(&this->m_state);
 }
 
 BaseViewWindow::~BaseViewWindow()
 {
 	disableCameraControls();
-	w_cam_manager.stop();
-	w_state.is_running = false;
-	glfwDestroyWindow(window);
+	m_cameraManager.stop();
+	m_state.is_running = false;
+	glfwDestroyWindow(m_window);
 }
 
 void BaseViewWindow::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	auto win = static_cast<BaseViewWindow*>(glfwGetWindowUserPointer(window));
 
-	win->w_key_manager.callKeyFunc(key, action);
+	win->m_keyManager.callKeyFunc(key, action);
 }
 
 void BaseViewWindow::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
@@ -108,8 +112,8 @@ void BaseViewWindow::cursorPosCallback(GLFWwindow* window, double xpos, double y
 	auto dx = xpos - width/2;
 	auto dy = ypos - height/2;
 
-	if (win->w_state.control_state == WinState::CONTROL_CAMERA) {
-		win->w_cam_manager.rotate(dx,dy);
+	if (win->m_state.control_state == WinState::CONTROL_CAMERA) {
+		win->m_cameraManager.rotate(dx,dy);
 		glfwSetCursorPos(window,width/2,height/2);
 	}	
 }
@@ -117,22 +121,22 @@ void BaseViewWindow::cursorPosCallback(GLFWwindow* window, double xpos, double y
 void BaseViewWindow::enableCameraControls()
 {
 	//Center cursor so camera does not jerk
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (glfwRawMouseMotionSupported()) {
-		glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 	}
-	glfwSetCursorPos(window,w_width/2,w_height/2);
-	w_state.control_state = WinState::CONTROL_CAMERA;
+	glfwSetCursorPos(m_window,m_width/2,m_height/2);
+	m_state.control_state = WinState::CONTROL_CAMERA;
 	return;
 }
 
 void BaseViewWindow::disableCameraControls()
 {
-	w_state.control_state = WinState::CONTROL_GUI;
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	m_state.control_state = WinState::CONTROL_GUI;
+	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	if (glfwRawMouseMotionSupported()) {
-		glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 	}
 	return;
 }

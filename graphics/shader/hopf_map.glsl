@@ -11,7 +11,7 @@ float PI = 3.141592654;
 vec3 sphere_path(float t) {
     float time = TIME_S*ANIM_SPEED;
     t = 2*PI*t;
-    float s = t + PI*cos(t) - time;
+    float s = sin(t)*t + PI*cos(2*t) - time;
     return vec3(sin(t)*cos(s),sin(t)*sin(s),cos(t));
 }
 

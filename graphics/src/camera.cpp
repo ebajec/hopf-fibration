@@ -62,18 +62,11 @@ void Camera::updateUniformData()
 
 	return;
 }
-bool Camera::bindToShader(Shader shader, const char* name, int binding) {
-	GLuint index = glGetUniformBlockIndex(shader.program,name);
-	if (index == GL_INVALID_INDEX) {
-		printf("Uniform block index for ");
-		printf(name); 
-		printf(" was not found.\n");
-		return false;
-	}
-	glUniformBlockBinding(shader.program, index, binding);
+void Camera::bindUbo(GLuint binding) 
+{
 	glBindBufferBase(GL_UNIFORM_BUFFER,binding,ubo);
-	return true;
 }
+
 void Camera::rotate(float pitch, float yaw)
 {
 	if (abs(pitch) > PI) return;

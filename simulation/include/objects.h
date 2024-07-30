@@ -23,7 +23,7 @@ public:
     void setScale(GLfloat s);
     void setPos(vec3 pos);
     void rotate(vec3 axis, GLfloat angle);
-    void render(Shader& shader);
+    void render(ShaderProgram& shader);
     
     enum ATTRIBUTES {POSITION,COLOR,NORMAL};
 private:

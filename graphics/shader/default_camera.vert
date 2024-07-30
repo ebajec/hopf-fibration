@@ -1,6 +1,6 @@
-#version 330 core
+#version 430 core
 
-layout (std140) uniform Camera {
+layout (std140,binding = 0) uniform Camera {
     mat4 view;
     mat4 proj;
     vec4 cam_pos;
@@ -32,7 +32,7 @@ void main() {
 	//vec4 normal_new = geom_model*vec4(normal,1);
 	
 	//lighting is based on geometry transformations
-	fcolor = vec4(hsvtorgb(vec3(v_pos.w,1,1)),1);
+	fcolor = v_color;//vec4(hsvtorgb(vec3(v_pos.w,1,1)),1);
 	fpos = vec3(v_pos_new);
 	fnormal = vec3(v_normal);
 	

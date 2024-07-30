@@ -1,0 +1,9 @@
+[submodule "external/imgui"]
+	path = external/imgui
+	url = https://github.com/ocornut/imgui.git
+    shallow=true
+    depth=2
+
+[submodule "external/linear-algebra"]
+	path = external/linear-algebra
+	url = https://github.com/ebajec/linear-algebra.git

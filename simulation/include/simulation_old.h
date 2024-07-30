@@ -8,10 +8,12 @@
 #include "backends/imgui_impl_opengl3.h"
 #include "matrix.h"
 
+#include "renderer.h"
+
 #include "defines.h"
 
 #include "objects.h"
-#include "view_window.h"
+#include "window.h"
 #include "shader.h"
 
 
@@ -25,7 +27,7 @@
 class PointController{
 public:
     PointController();
-    void render(Shader& shader);
+    void render(ShaderProgram& shader, const vector<vec4>& points);
     void transform(mat4 trans);
 private:
 
@@ -51,7 +53,7 @@ public:
     ~HopfSimulation();
 
 protected:
-    void _main();
+    void windowLoop();
     bool initFiberData();
     bool initControllerData();
     bool initShaders();
@@ -59,23 +61,26 @@ protected:
     void renderControlSphere();
     void renderUI();
 
+    ShaderManager * shaderManager;
+
+    Buffer spherePoints;
+    Buffer lineInstances;
+
+    vector<vec4> spherePointsCPU;
+
     PointController* m_controller;
     Camera* c_cam;
     Sphere* c_sphere;
 
-    Shader c_shader;
-    Shader hf_main_shader;                   // Handles rendering of main scene 
-    Shader hf_map;                           // Computes fibers of hopf map
-
-    int poop;
+    ShaderProgram c_shader;
+    ShaderProgram hf_main_shader;                   // Handles rendering of main scene 
+    ShaderProgram hf_map;                           // Computes fibers of hopf map
 
     GLuint hf_vao;                               
-    GLuint hf_vbo_in; 
     GLuint hf_vbo_out; 
-    GLfloat hf_data_in[4*FIBER_COUNT*FIBER_SIZE];   // Arguments to hf_map; allows parallel computation of fibers.
+    GLfloat hf_data_in[8*FIBER_COUNT*FIBER_SIZE];   // Arguments to hf_map; allows parallel computation of fibers.
     GLint hf_draw_firsts[FIBER_COUNT];              // For glMultiDrawArrays
-    GLsizei hf_draw_counts[FIBER_COUNT];            // For glMultiDrawArrays
-    float hf_anim_speed;                         
+    GLsizei hf_draw_counts[FIBER_COUNT];            // For glMultiDrawArrays               
     int hf_draw_max = FIBER_COUNT;                  // Parameter to control number of drawn circles
 };
 

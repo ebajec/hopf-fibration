@@ -11,11 +11,8 @@
 
 #define CONTROL_VIEWPORT_SIZE 600   // Determines height/width of lower-right viewport
 
-#define FIBER_COUNT 100             // Number of fibers to compute
-#define FIBER_SIZE 1000             // Number of samples in each fiber
-
-#define HF_CAMERA_BINDING 1
-#define C_CAMERA_BINDING 0
+#define FIBER_COUNT 100            // Number of fibers to compute
+#define FIBER_SIZE 100            // Number of samples in each fiber
 
 #ifndef PI
     #define PI 3.141592654f
@@ -24,6 +21,8 @@
 #ifndef ROOT2
     #define ROOT2 1.4142135623f
 #endif 
+
+#define LENGTH(size,type) (size/sizeof(type))
 
 typedef matrix<4,1,GLfloat> vec4;
 typedef matrix<3,1,GLfloat> vec3;

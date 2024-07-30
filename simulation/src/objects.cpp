@@ -89,13 +89,13 @@
     delete[] data_color;
     return;
 }
-void Sphere::render(Shader& shader) {
+void Sphere::render(ShaderProgram& shader) {
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 
-    shader.useProgram();
+    shader.use();
     shader.setUniform("obj_geometry",geometry,GL_TRUE);
     shader.setUniform("scale",scale);
     glBindVertexArray(vao);
