@@ -90,13 +90,10 @@
     return;
 }
 void Sphere::render(ShaderProgram& shader) {
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LESS);
 
-    shader.use();
-    shader.setUniform("obj_geometry",geometry,GL_TRUE);
+    shader.setUniform("model",geometry,GL_TRUE);
     shader.setUniform("scale",scale);
     glBindVertexArray(vao);
     //glDrawArrays(GL_TRIANGLE_STRIP,0,2*phi_step*theta_step);

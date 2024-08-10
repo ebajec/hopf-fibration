@@ -12,9 +12,9 @@ layout (std430, binding = 0) buffer inputData
 
 struct InstanceData
 {
-    float width;
     uint size;
     uint firstOffset;
+    float width;
     uint padding;
 };
 
@@ -59,13 +59,19 @@ vec3 hsvtorgb(vec3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+vec3 sphereToColor(vec3 point) {
+
+    float u = asin(point.z)/3.141593654;
+    return hsvtorgb(vec3(u,1,1));
+}
+
 void main() {   
     uvec3 id = gl_GlobalInvocationID;
 
     if (id.x >= numFibers)
         return;
 
-    uint size = instance[id.x].size;
+    uint size = instance[id.x].size;    
     uint offset = instance[id.x].firstOffset;
     vec4 s2_point = spherePoints[id.x];
 
@@ -79,5 +85,5 @@ void main() {
     result = stereo_proj(result);
 
     outputPoints[offset + id.y].position = vec4(result.xyz,1);
-    outputPoints[offset + id.y].color = vec4(hsvtorgb(vec3(s,1,1)),1);
+    outputPoints[offset + id.y].color = vec4(sphereToColor(s2_point.xyz),1);;
 }

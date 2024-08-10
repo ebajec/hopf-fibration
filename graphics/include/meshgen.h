@@ -19,11 +19,16 @@ struct TangentFrame
 
 struct LineInstance
 {
-    float width;
     uint size;
     uint firstIndex;
+    float width;
     uint padding;
 };
+
+MultiIndex indicesFromInstance(Buffer& instances);
+
+std::vector<vec4> surfacePoints(vec3 param(float u, float v), const int uCount, const int vCount);
+std::vector<int> surfaceIndices(const int uCount, const int vCount, const int chi);
 
 class MeshGen 
 {
@@ -40,29 +45,3 @@ private:
 };
 
 #endif
-
-//Pretend main method. 
-
-// Renderer renderer;
-// ComputeManager;
-
-// // Only inputs
-// Buffer spherePoints;
-// Buffer circleData;
-// Buffer circleInstances;
-
-// // Intermediate data. Could be stored outside of main program logic.
-// Buffer lineTangentFrames;
-// PrimitiveData<Vertex> lineMeshes;
-
-// // Only done on update. 
-// ComputeHopf(spherePoints,circles);
-// // Computations like this which have intermediate steps could hold their own cache.
-// ComputeLineMeshes(circleData, circleIndices  ,lineMeshes);
-
-
-// renderer.setActiveShader(defaultMesh);
-// lineMeshes.bind();
-// renderer.render();
-// lineMeshes.unbind();
-

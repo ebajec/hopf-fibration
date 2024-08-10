@@ -49,25 +49,14 @@ BaseViewWindow::BaseViewWindow(
 		}
 	});
 
-	/************** SET UP CAMERA **************/
-	m_camera = Camera(
-		vec3({ -1,0,0 }),
-		vec3({ 10,0,0 }),
-		m_width,
-		m_height,
-		PI / 4);
-	m_cameraManager.attach(&m_camera);
-
-
 	// Create glfw context
-
 	m_window = glfwCreateWindow(m_width, m_height, title, monitor, share);
 	if (!m_window) {
 		fprintf(stderr, "ERROR: could not open window with GLFW3\n");
 		glfwTerminate();
 	}
 	glfwMakeContextCurrent(m_window);
-	glfwSetWindowPos(m_window,0,0);
+	glfwSetWindowPos(m_window,300,300);
 
 	// start GLEW extension handler
 	glewExperimental = GL_TRUE;
@@ -83,9 +72,17 @@ BaseViewWindow::BaseViewWindow(
 	printf("Renderer: %s\n", _renderer);
 	printf("OpenGL version supported %s\n", _version);
 
-	m_camera.init();
-	m_state.is_running = true;
+		/************** SET UP CAMERA **************/
+	m_camera = Camera(
+		vec3({ -1,0,0 }),
+		vec3({ 10,0,0 }),
+		m_width,
+		m_height,
+		PI / 4);
+	m_cameraManager.attach(&m_camera);
 	m_cameraManager.start(&this->m_state);
+
+	m_state.is_running = true;
 }
 
 BaseViewWindow::~BaseViewWindow()
@@ -175,7 +172,6 @@ void CameraManager::start(WinState* state)
 void CameraManager::stop()
 {
 	updater.detach();
-	cam->reset();
 	return;
 }
 

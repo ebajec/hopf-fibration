@@ -16,23 +16,6 @@
 
 typedef unsigned int uint;
 
-typedef enum 
-{
-    Integral,
-    Float,
-    Double
-} AttributeType;
-
-struct AttribLayout
-{
-    GLuint         location;   // Location of attribute in vertex array  
-    GLint          size;       // Number of components in attribute (i.e., for vec4 this would be 4).
-    GLenum         type;       // Data type.
-    GLboolean      normalized; // Whether to normalize float data.
-    const void*    pointer;    // Byte offset from beginning of VBO to first occurence of this attribute.
-    AttributeType  aType;      // Specifies which version of glVertexAttribPointer to use.
-};
-
 struct Vertex
 {
     vec4 position;
@@ -42,11 +25,11 @@ struct Vertex
 
 struct MultiIndex
 {
-    uint size;       // Length of starts and counts
-    uint * starts;   // starting indices
-    uint * counts;
+    std::vector<int> indices;
+    int totalCount();
+    int* firsts();
+    int* counts();
 };
-
 
 /*************************************************************************
  * 
@@ -58,6 +41,8 @@ class Buffer
 {
 public:
     Buffer();
+    Buffer(size_t size, GLenum usage);
+
     ~Buffer();
 
     template<typename T>
@@ -70,6 +55,20 @@ public:
 private:
     GLuint m_id;
     size_t m_size;
+};
+
+template<typename T>
+struct BufferMap 
+{
+public:
+    BufferMap(Buffer& buffer, size_t offset, size_t length, GLbitfield access);
+    ~BufferMap();
+    void unmap();
+    T operator [] (size_t index);
+
+    T* data;
+private:
+    GLuint m_id;
 };
 
 /*************************************************************************
@@ -85,19 +84,31 @@ public:
     PrimitiveData();
     ~PrimitiveData();
 
-    void uploadData(const vector<vType>& data, const vector<uint>& indices);
-    bool setAttribLayout(const vector<AttribLayout> & attribs);
+    void uploadData(const vector<vType>& data, GLenum usage);
+    void uploadData(const vector<vType>& data, const vector<uint>& indices, GLenum usage);
+
+    void reserveAttribData(size_t count, GLenum usage = GL_STREAM_DRAW);
+    void reserveIndexData(size_t count, GLenum usage = GL_STREAM_DRAW);
+
+    void attribPointer(GLuint location, GLint size, GLenum type, GLboolean normalized, const void* pointer);
+    void attribIPointer(GLuint location, GLint size, GLenum type, const void* pointer);
+    void attribLPointer(GLuint location, GLint size, GLenum type, const void* pointer);
+
     void bind() const; 
     void unbind() const;
+
+    MultiIndex* getMultiDrawIndices();
+    void setMultiDrawIndices(MultiIndex indices);
 
     const Buffer * const vbo(){return &m_vbo;}
     const Buffer * const ebo(){return &m_ebo;}
 
 private:
-    bool setAttribPointer(const AttribLayout & attrib,uint location);
     GLuint m_vao;
     Buffer m_vbo;
     Buffer m_ebo;
+
+    MultiIndex m_multiIndex;
 };
 
 /*************************************************************************
@@ -118,10 +129,11 @@ protected:
     ShaderManager * shaders;
 };
 
-/**
- * Buffer: Implementation of templates
- */
-
+/*************************************************************************
+ * 
+ * Buffer: Template defintions
+ * 
+ *************************************************************************/
 template <typename T>
 inline void Buffer::uploadData(vector<T> data, GLenum usage)
 {
@@ -137,8 +149,26 @@ inline void Buffer::uploadData(vector<T> data, GLenum usage)
         glBufferData(GL_ARRAY_BUFFER,size,data.data(),usage);  
     }
     m_size = size;
-    
 }
+
+template<typename T>
+BufferMap<T>::BufferMap(Buffer& buffer, size_t offset, size_t length, GLbitfield access)
+{
+    m_id = buffer.id();
+    data = (T*)glMapNamedBufferRange(m_id,offset*sizeof(T),length*sizeof(T),access);
+};
+
+template<typename T>
+BufferMap<T>::~BufferMap()
+{
+    glUnmapNamedBuffer(m_id);
+};
+
+template<typename T>
+T BufferMap<T>::operator[](size_t index)
+{   
+    return data[index];
+};
 
 /*************************************************************************
  * 
@@ -159,57 +189,106 @@ PrimitiveData<vType>::~PrimitiveData()
 }
 
 template<typename vType>
-void PrimitiveData<vType>::uploadData(const vector<vType>& data, const vector<uint>& indices)
+void PrimitiveData<vType>::uploadData(const vector<vType>& data, const vector<uint>& indices, GLenum usage)
 {
-    m_vbo.uploadData((void*)data.data(),data.size()*sizeof(vType));
-    m_ebo.uploadData((void*)indices.data(),indices.size()*sizeof(uint));
-}
+    m_vbo.uploadData((void*)data.data(),data.size()*sizeof(vType),usage);
+    m_ebo.uploadData((void*)indices.data(),indices.size()*sizeof(uint),usage);
 
-template <typename vType>
-bool PrimitiveData<vType>::setAttribLayout(const vector<AttribLayout> &attribs)
-{
-    for (uint i = 0; i < attribs.size(); i++)
-        if (!setAttribPointer(attribs[i],i))
-            return false;
-    return true;
-}
-
-template <typename vType>
-inline void PrimitiveData<vType>::bind() const
-{
     glBindVertexArray(m_vao);
-    glBindBuffer(GL_ARRAY_BUFFER,m_vbo.id());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,m_ebo.id());
 }
 
-template <typename vType>
-inline void PrimitiveData<vType>::unbind() const
+template<typename vType>
+void PrimitiveData<vType>::reserveAttribData(size_t count, GLenum usage)
 {
-    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,m_vbo.id());
+    glBufferData(GL_ARRAY_BUFFER,count*sizeof(vType),nullptr,usage);
     glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+
+template<typename vType>
+void PrimitiveData<vType>::reserveIndexData(size_t count, GLenum usage)
+{
+    glBindVertexArray(m_vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,m_ebo.id());
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,count*sizeof(vType),nullptr,usage);
+    glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 }
 
 template <typename vType>
-inline bool PrimitiveData<vType>::setAttribPointer(const AttribLayout &attrib, uint location)
+void PrimitiveData<vType>::bind() const
 {
-    GLenum type = attrib.type;
-    glEnableVertexAttribArray(location);
+    glBindVertexArray(m_vao);
+}
+
+template <typename vType>
+void PrimitiveData<vType>::unbind() const
+{
+    glBindVertexArray(0);
+}
+
+template <typename vType>
+void PrimitiveData<vType>::attribPointer(
+        GLuint         location,   // Location of attribute in vertex array  
+        GLint          size,       // Number of components in attribute (i.e., for vec4 this would be 4).
+        GLenum         type,       // Data type.
+        GLboolean      normalized, // Whether to normalize float data.
+        const void*    pointer     // Byte offset from beginning of VBO to first occurence of this attribute.
+    )
+{
+    glBindVertexArray(m_vao);
     glBindBuffer(GL_ARRAY_BUFFER,m_vbo.id());
-    switch (attrib.aType)
-    {
-    case Float:
-        glVertexAttribPointer(location,attrib.size,type,attrib.normalized,sizeof(vType),attrib.pointer);
-        return true;
-    case Integral:
-        glVertexAttribIPointer(location,attrib.size,type,sizeof(vType),attrib.pointer);
-        return true;
-    case Double:
-        glVertexAttribLPointer(location,attrib.size,type,sizeof(vType),attrib.pointer);
-        return true;
-    default:
-        return false;
-    }
+    glEnableVertexAttribArray(location);
+    glVertexAttribPointer(location,size,type,normalized,sizeof(vType),pointer);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+
+template <typename vType>
+void PrimitiveData<vType>::attribIPointer(
+        GLuint         location,   // Location of attribute in vertex array  
+        GLint          size,       // Number of components in attribute (i.e., for vec4 this would be 4).
+        GLenum         type,       // Data type.
+        const void*    pointer     // Byte offset from beginning of VBO to first occurence of this attribute.
+    )
+{
+    glBindVertexArray(m_vao);
+    glBindBuffer(GL_ARRAY_BUFFER,m_vbo.id());
+    glEnableVertexAttribArray(location);
+    glVertexAttribIPointer(location,size,type,sizeof(vType),pointer);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+
+template <typename vType>
+void PrimitiveData<vType>::attribLPointer(
+        GLuint         location,   // Location of attribute in vertex array  
+        GLint          size,       // Number of components in attribute (i.e., for vec4 this would be 4).
+        GLenum         type,       // Data type.
+        const void*    pointer     // Byte offset from beginning of VBO to first occurence of this attribute.
+    )
+{
+    glBindVertexArray(m_vao);
+    glBindBuffer(GL_ARRAY_BUFFER,m_vbo.id());
+    glEnableVertexAttribArray(location);
+    glVertexAttribLPointer(location,size,type,sizeof(vType),pointer);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+
+template <typename vType>
+MultiIndex* PrimitiveData<vType>::getMultiDrawIndices()
+{
+    return &m_multiIndex;
+}
+template <typename vType>
+void PrimitiveData<vType>::setMultiDrawIndices(MultiIndex indices)
+{
+    this->m_multiIndex = indices;
 }
 
 #endif

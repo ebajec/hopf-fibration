@@ -6,12 +6,9 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-#include "matrix.h"
-
+#include "meshgen.h"
 #include "renderer.h"
-
 #include "defines.h"
-
 #include "objects.h"
 #include "window.h"
 #include "shader.h"
@@ -27,7 +24,7 @@
 class PointController{
 public:
     PointController();
-    void render(ShaderProgram& shader, const vector<vec4>& points);
+    void render(ShaderProgram& shader, const vector<vec4>& points,int limit);
     void transform(mat4 trans);
 private:
 
@@ -57,14 +54,20 @@ protected:
     bool initFiberData();
     bool initControllerData();
     bool initShaders();
+
+    void updatePositions();
+
     void renderFibers();
-    void renderControlSphere();
+    void renderSpheres();
     void renderUI();
 
     ShaderManager * shaderManager;
 
     Buffer spherePoints;
     Buffer lineInstances;
+    PrimitiveData<LineData> hopfCircles;
+
+    mat4 model = mat4::id();
 
     vector<vec4> spherePointsCPU;
 
@@ -72,15 +75,7 @@ protected:
     Camera* c_cam;
     Sphere* c_sphere;
 
-    ShaderProgram c_shader;
-    ShaderProgram hf_main_shader;                   // Handles rendering of main scene 
-    ShaderProgram hf_map;                           // Computes fibers of hopf map
-
-    GLuint hf_vao;                               
-    GLuint hf_vbo_out; 
-    GLfloat hf_data_in[8*FIBER_COUNT*FIBER_SIZE];   // Arguments to hf_map; allows parallel computation of fibers.
-    GLint hf_draw_firsts[FIBER_COUNT];              // For glMultiDrawArrays
-    GLsizei hf_draw_counts[FIBER_COUNT];            // For glMultiDrawArrays               
+    MultiIndex hf_indices;
     int hf_draw_max = FIBER_COUNT;                  // Parameter to control number of drawn circles
 };
 

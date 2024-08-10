@@ -9,7 +9,12 @@ layout (std140,binding = 0) uniform Camera {
 	float far;
 };
 
-uniform mat4 obj_geometry;
+layout (std430, binding = 0) buffer Positions
+{
+    vec4[] positions;
+};
+
+uniform mat4 model;
 uniform float scale;
 
 layout (location = 0) in vec4 v_pos;
@@ -28,8 +33,10 @@ vec3 hsvtorgb(vec3 c) {
 
 void main() {
 	// Apply geometry transformation
-	vec4 v_pos_new = obj_geometry*vec4(scale*v_pos.xyz,1);
-	vec4 v_normal_new = obj_geometry*vec4(v_normal.xyz,0);
+    vec4 offset = positions[gl_InstanceID];
+
+	vec4 v_pos_new = model*vec4(scale*v_pos.xyz,1) + offset;
+	vec4 v_normal_new = model*vec4(v_normal.xyz,0);
 
 	fcolor = v_color;
 	fpos = vec3(v_pos_new);

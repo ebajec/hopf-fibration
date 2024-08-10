@@ -1,5 +1,83 @@
 #include "meshgen.h"
 
+MultiIndex indicesFromInstance(Buffer& instances)
+{
+    uint count = instances.size()/sizeof(LineInstance);
+
+    BufferMap<LineInstance> instanceData(instances,0, count, GL_MAP_READ_BIT);
+
+    std::vector<int> indices(2*count);
+
+    for (uint i = 0; i < count; i++)
+    {
+        indices[i]         = instanceData[i].firstIndex;
+        indices[count + i] = instanceData[i].size;
+    }
+
+    return {indices};
+}
+    
+std::vector<vec4> surfacePoints(
+    vec3 (*param)(float, float), const int uCount, const int vCount)
+{
+    std::vector<vec4> points(uCount*vCount);
+    float u,v;
+    size_t indexCount;
+
+    for (int i = 0; i < uCount; i++)
+    {
+        for (int j = 0; j < vCount; j++)
+        {
+            u = (float)i/(float)uCount;
+            v = (float)j/(float)vCount;
+
+            vec4 p = param(u,v);
+            p[0][3] = 1;
+            points[i*uCount + j] = p;
+        }
+    }
+    return points;
+}
+
+static int nextIndex(const int chi, const int index, const char coord)
+{
+    switch (coord)
+    {
+    case 0:
+        switch (chi)
+        {
+
+        }
+    case 1:
+        switch (chi)
+        {
+
+        }
+    default: 
+        return 0;
+    }
+}
+
+std::vector<int> surfaceIndices(const int uCount, const int vCount, const int chi)
+{
+    std::vector<int> indices(6*uCount*vCount);
+
+    size_t counter = 0;
+
+    for (int i = 0; i < uCount; i++)
+    {
+        for (int j = 0; j < vCount; j++)
+        {
+            indices[counter++] = i*vCount + j;
+            indices[counter++] = i*vCount + j + 1;
+            indices[counter++] = (i+1)*vCount + j;
+            indices[counter++] = i*vCount + j;
+            indices[counter++] = i*vCount + j + 1;
+            indices[counter++] = (i+1)*vCount + j;
+        }
+    }
+}
+
 MeshGen::MeshGen()
 {
 }

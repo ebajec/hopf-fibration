@@ -21,26 +21,9 @@ public:
 
 protected:
     void windowLoop();
-    bool initShaders();
-    void renderUI();
 
     ShaderManager * m_shaderManager;
     ImguiContextGLFW * m_ui;
 };
-
-
-struct HopfFibrationData
-{
-    Buffer pointsS2;
-    Buffer circleInstances;
-    Buffer circlePoints;
-};
-
-
-
-
-
-
-
 
 #endif

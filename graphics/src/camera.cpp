@@ -3,58 +3,69 @@
 
 #define SIZE_F_MAT4 16
 
-Camera::Camera(vec3 normal, vec3 pos, int w, int h, GLfloat FOV, GLfloat far)
-	:
-	_near_dist(1 / tan(FOV / 2)),
-	_far_dist(far),
-	_pos(pos)
+static mat3 viewCoordsLeftHanded(vec3 normal)
 {
-	//generate orthonormal, right-handed basis for camera coordinates, with Z
-	//as the normal vector. xyz
+	vec3 basis[3];
+
 	normal = normalize(normal);
 	basis[2] = normal;
-	basis[0] = cross(normal, vec3({ 0,1,0 }));
+	basis[0] = cross(normal, vec3({ 0,0,1 }));
 	basis[1] = cross(basis[0], basis[2]);
 	basis[0] = normalize(basis[0]);
 	basis[1] = normalize(basis[1]);
 
-	coord_trans = inv(basis[0] | basis[1] | basis[2]);
-
-	setScreenRatio(w,h);
-
-	_world = mat4(mat3::id() | -1 * (_pos - basis[2] * _near_dist));
-
-	_model_yaw = mat4{
-		1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1
-	};
-	_model_pitch = mat4{
-		1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1
-	};
+	return basis[0]|basis[1]|basis[2];
 }
-void Camera::init(){
+
+Camera::Camera(vec3 normal, vec3 pos, int w, int h, GLfloat FOV, GLfloat near, GLfloat far)
+	:
+	fov(FOV),
+	near(near),
+	far(far),
+	position(pos)
+{
 	glGenBuffers(1, &ubo);
-	updateUniformData();
+	coords = mat4(viewCoordsLeftHanded(normal));
+	aspect = (float)h / (float)w;
+
+	updateUbo();
 }
-void Camera::updateUniformData()
+
+Camera::~Camera()
+{
+	glDeleteBuffers(1,&ubo);
+}
+
+mat4 Camera::getViewMatrix()
+{
+	mat4 world = mat4(mat3::id() | -1 * (position - coords.col(2) * near));
+	return coords.transpose()* world;;
+}
+
+mat4 Camera::getProjMatrix()
+{
+	return mat4({
+		(1 / tan(fov / 2))*(aspect),0,0,0,
+		0,1 / tan(fov / 2),0,0,
+		0,0,far/(far - near),-far*near/(far - near),
+		0,0,1,0
+	});
+}
+
+void Camera::updateUbo()
 {	
-	mat4 view = mat4(coord_trans) * _model_pitch * _model_yaw;
-	mat4 worldview = (view * _world).transpose();
-	uint16_t dsize = 2*SIZE_F_MAT4 + 4 + 4 + 2;
-	GLfloat data[dsize];
+	mat4 proj = getProjMatrix().transpose();
+	mat4 view = getViewMatrix().transpose();
 
 	// Copy camera data into buffers
-	memcpy(data, worldview.data(), SIZE_F_MAT4*sizeof(float));
-	memcpy(data + SIZE_F_MAT4, _proj.data(), SIZE_F_MAT4*sizeof(float));
-	memcpy(data + 2*SIZE_F_MAT4, vec4(_pos).data(), 4*sizeof(float));
+	uint16_t dsize = 2*SIZE_F_MAT4 + 4 + 4 + 2;
+	GLfloat data[dsize];
+	memcpy(data, view.data(), SIZE_F_MAT4*sizeof(float));
+	memcpy(data + SIZE_F_MAT4, proj.data(), SIZE_F_MAT4*sizeof(float));
+	memcpy(data + 2*SIZE_F_MAT4, vec4(position).data(), 4*sizeof(float));
 	memcpy(data + 2*SIZE_F_MAT4 + 3, vec4(view).col(2).data(), 4*sizeof(float));
-	data[2*SIZE_F_MAT4 + 8] = _near_dist;
-	data[2*SIZE_F_MAT4 + 8 + 1] = _far_dist;
+	data[2*SIZE_F_MAT4 + 8] = near;
+	data[2*SIZE_F_MAT4 + 8 + 1] = far;
 
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 	glBufferData(GL_UNIFORM_BUFFER, dsize*sizeof(float), data, GL_STATIC_DRAW);
@@ -70,37 +81,17 @@ void Camera::bindUbo(GLuint binding)
 void Camera::rotate(float pitch, float yaw)
 {
 	if (abs(pitch) > PI) return;
-	_model_yaw = mat4(rotatexz<GLfloat>(yaw)) * _model_yaw;
-	_model_pitch = mat4(rot_axis(basis[0], -pitch)) * _model_pitch;
+	coords = mat4(rot_axis(vec3(coords.col(0)), pitch)) *  mat4(rot_axis(vec3{0,0,1},yaw)) * coords ;
 }
-void Camera::setScreenRatio(int w, int h)
-{
-	_proj = {
-		(float)h / (float)w,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1
-	};
-}
+
 void Camera::translate(vec3 delta)
 {
-    _pos = _pos + coord_trans * mat3(_model_yaw) * mat3{1,0,0,0,1,0,0,0,1} * delta ;
-	_updateTransformations();
+	vec3 offsetxy = vec3(vec2(coords.col(0)*delta[0][0] + coords.col(2)*delta[0][2]));
+	vec3 offsetz = vec3{0,0,1}*delta[0][1];
+    position = position + offsetxy + offsetz;
 }
-void Camera::reset()
+
+void Camera::resize(int width, int height)
 {
-	_pos = { 0,0,0 };
-	_model_yaw = mat4{
-		1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1
-	};
-	_model_pitch = mat4{
-		1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1
-	};
-	_updateTransformations();
+	this->aspect = (float)height/(float)width;
 }

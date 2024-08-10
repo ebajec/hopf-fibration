@@ -16,6 +16,11 @@ static inline vec3 S2(GLfloat phi, GLfloat theta)
     return vec3{sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
 }
 
+
+static inline int modulo(int dividend, int divisor) {
+	return (dividend % divisor + divisor) % divisor;
+}
+
 static inline bool isFloat(GLenum type)
 {
     return 
