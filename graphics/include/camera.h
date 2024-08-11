@@ -6,7 +6,16 @@
 #include <GL/glew.h> 
 #include <GLFW/glfw3.h> 
 
-#define PI 3.141592654f
+struct CameraUBOLayout
+{
+    mat4 view;
+    mat4 proj;
+	mat4 pv;
+	vec4 cam_pos;
+	vec4 cam_dir;
+	float near;
+	float far;
+};
 
 struct Camera {
 public:
@@ -24,25 +33,19 @@ public:
 
 	void updateUbo();
 	void bindUbo(GLuint binding);
-
 	void rotate(float pitch, float yaw);
 	void translate(vec3 delta);
 	void resize(int width, int height);
-
 	mat4 getViewMatrix();
 	mat4 getProjMatrix();
-
 	vec3 coord(int i){return vec3(coords[i]);}
 
-	GLuint ubo;
-
-	//new fields
 	float fov, aspect, near, far;
 	vec3 viewPos;
-
 	vec3 position;
 	mat4 coords;
 	mat4 proj;
+	GLuint ubo;
 };
 
 

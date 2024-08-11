@@ -6,7 +6,7 @@
 
 #define SIZE_F_MAT4 16
 
-static mat3 viewCoordsLeftHanded(vec3 normal)
+static mat3 orthCoordsLeft(vec3 normal)
 {
 	vec3 basis[3];
 
@@ -28,7 +28,7 @@ Camera::Camera(vec3 normal, vec3 pos, int w, int h, GLfloat FOV, GLfloat near, G
 	position(pos)
 {
 	glGenBuffers(1, &ubo);
-	coords = mat4(viewCoordsLeftHanded(normal));
+	coords = mat4(orthCoordsLeft(normal));
 	aspect = (float)h / (float)w;
 
 	updateUbo();
@@ -58,22 +58,22 @@ mat4 Camera::getProjMatrix()
 
 void Camera::updateUbo()
 {	
-	mat4 proj = getProjMatrix();
 	mat4 view = getViewMatrix();
-	vec4 tempPos = vec4(position,1);
+	mat4 proj = getProjMatrix();
 
-	// Copy camera data into buffers
-	uint16_t dsize = 2*SIZE_F_MAT4 + 4 + 4 + 2;
-	GLfloat data[dsize];
-	memcpy(data, glm::value_ptr(view), SIZE_F_MAT4*sizeof(float));
-	memcpy(data + SIZE_F_MAT4, glm::value_ptr(proj), SIZE_F_MAT4*sizeof(float));
-	memcpy(data + 2*SIZE_F_MAT4, glm::value_ptr(tempPos), 4*sizeof(float));
-	memcpy(data + 2*SIZE_F_MAT4 + 3, glm::value_ptr(view[2]), 4*sizeof(float));
-	data[2*SIZE_F_MAT4 + 8] = near;
-	data[2*SIZE_F_MAT4 + 8 + 1] = far;
+	CameraUBOLayout data 
+	{
+		.view = view,
+		.proj = proj,
+		.pv = proj * view,
+		.cam_pos = vec4(position,1),
+		.cam_dir = view[2],
+		.near = near,
+		.far = far
+	};
 
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-	glBufferData(GL_UNIFORM_BUFFER, dsize*sizeof(float), data, GL_STATIC_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(CameraUBOLayout), &data, GL_STATIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER,0);
 
 	return;
@@ -85,7 +85,7 @@ void Camera::bindUbo(GLuint binding)
 
 void Camera::rotate(float pitch, float yaw)
 {
-	if (abs(pitch) > PI) return;
+	if (fabs(pitch) > PI) return;
 	coords = mat4(rotation(vec3(coords[0]), -pitch)) *  mat4(rotation(vec3(0,0,1),-yaw)) * coords ;
 }
 

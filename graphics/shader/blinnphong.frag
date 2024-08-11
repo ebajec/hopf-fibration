@@ -8,14 +8,14 @@ out vec4 FragColor;
 layout (std140,binding = 0) uniform Camera {
     mat4 view;
     mat4 proj;
-    vec4 cam_pos;
-    vec4 cam_dir;
+	mat4 pv;
+	vec4 cam_pos;
+	vec4 cam_dir;
 	float near;
 	float far;
 };
 
 float PI = 3.141592654;
-
 
 vec4 calc_light(vec3 light, vec4 color) {
     vec3 light_ray = normalize(light - fpos);
