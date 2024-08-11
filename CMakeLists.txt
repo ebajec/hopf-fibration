@@ -13,7 +13,6 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 # External dependencies
 set(EXTERNAL_DEPS 
-    external/linear-algebra/lib 
     external/imgui)
 
 set(EXTERNAL_SOURCES

@@ -14,7 +14,7 @@
 namespace fs = std::filesystem;
 
 inline std::string read_text_file(const char* src){
-	ifstream file(src);
+	std::ifstream file(src);
 
 	if (!file.is_open()) {
 		fprintf(stderr, "ERROR: could not open file: %s \n",src);

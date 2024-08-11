@@ -27,8 +27,8 @@
     GLfloat* data_pos = new GLfloat[data_size];
     GLfloat* data_color = new GLfloat[data_size];
 
-    vector<GLfloat> phi = lerp(static_cast<GLfloat>(0),2*PI,phi_step);
-    vector<GLfloat> theta = lerp(static_cast<GLfloat>(0),PI,theta_step);
+    std::vector<GLfloat> phi = lerp(static_cast<GLfloat>(0),2*PI,phi_step);
+    std::vector<GLfloat> theta = lerp(static_cast<GLfloat>(0),PI,theta_step);
 
     int idx = 0;
     vec4 p;

@@ -1,7 +1,6 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#include "matrix.h"
 #include <glm/glm.hpp>
 #include <glm/vec4.hpp>
 #include <glm/vec3.hpp>

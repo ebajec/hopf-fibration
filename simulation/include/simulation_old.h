@@ -24,7 +24,7 @@
 class PointController{
 public:
     PointController();
-    void render(ShaderProgram& shader, const vector<vec4>& points,int limit);
+    void render(ShaderProgram& shader, const std::vector<vec4>& points,int limit);
     void transform(mat4 trans);
 private:
 
@@ -69,7 +69,7 @@ protected:
 
     mat4 model = mat4(1.0f);
 
-    vector<vec4> spherePointsCPU;
+    std::vector<vec4> spherePointsCPU;
 
     PointController* m_controller;
     Camera* c_cam;

@@ -31,7 +31,7 @@ struct WinState{
 */
 class KeyManager {
 private:
-	map<pair<int, int>, std::function<void()>> keymap;
+	std::map<std::pair<int, int>, std::function<void()>> keymap;
 public:
 	KeyManager() {}
 	//maps function to key action
@@ -49,7 +49,7 @@ public:
 */
 class CameraManager {
 private:
-	thread updater;
+	std::thread updater;
 	Camera* cam;
 	vec2 cursor_pos = { 0,0 };
 

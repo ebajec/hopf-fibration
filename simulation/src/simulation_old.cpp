@@ -6,7 +6,7 @@
 #include "shader.h"
 #include "simulation.h"
 #include "renderer.h"
-#include "timer.h"
+#include <vector>
 
 #define SHOW_BUFFER(data, size, id)\
 glBindBuffer(GL_ARRAY_BUFFER,id);\
@@ -26,14 +26,14 @@ float data[size];\
 PointController::PointController()
 {
     sphere = new Sphere(SPHERE_SIZE,SPHERE_SIZE,vec3{1,0,0});
-    points = vector<vec3>(SCOUNT);
+    points = std::vector<vec3>(SCOUNT);
 
     for (int i = 0; i < SCOUNT; i++) 
         points[i] = S2(uRand()*2*PI,uRand()*PI);
     sphere->setScale(0.07f);
 }
 
-void PointController::render(ShaderProgram& shader, const vector<vec4>& inpoints, int limit)
+void PointController::render(ShaderProgram& shader, const std::vector<vec4>& inpoints, int limit)
 {   
     int i = 0;
     int size = inpoints.size();

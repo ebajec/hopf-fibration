@@ -46,7 +46,7 @@ public:
     ~Buffer();
 
     template<typename T>
-    void uploadData(vector<T> data, GLenum usage = GL_STREAM_DRAW);
+    void uploadData(std::vector<T> data, GLenum usage = GL_STREAM_DRAW);
     void uploadData(void * data, size_t size, GLenum usage = GL_STREAM_DRAW);
 
     const size_t size() const {return m_size;}
@@ -84,8 +84,8 @@ public:
     PrimitiveData();
     ~PrimitiveData();
 
-    void uploadData(const vector<vType>& data, GLenum usage);
-    void uploadData(const vector<vType>& data, const vector<uint>& indices, GLenum usage);
+    void uploadData(const std::vector<vType>& data, GLenum usage);
+    void uploadData(const std::vector<vType>& data, const std::vector<uint>& indices, GLenum usage);
 
     void reserveAttribData(size_t count, GLenum usage = GL_STREAM_DRAW);
     void reserveIndexData(size_t count, GLenum usage = GL_STREAM_DRAW);
@@ -135,7 +135,7 @@ protected:
  * 
  *************************************************************************/
 template <typename T>
-inline void Buffer::uploadData(vector<T> data, GLenum usage)
+inline void Buffer::uploadData(std::vector<T> data, GLenum usage)
 {
     size_t size = data.size()*sizeof(T);
     glBindBuffer(GL_ARRAY_BUFFER,m_id);
@@ -189,7 +189,7 @@ PrimitiveData<vType>::~PrimitiveData()
 }
 
 template<typename vType>
-void PrimitiveData<vType>::uploadData(const vector<vType>& data, const vector<uint>& indices, GLenum usage)
+void PrimitiveData<vType>::uploadData(const std::vector<vType>& data, const std::vector<uint>& indices, GLenum usage)
 {
     m_vbo.uploadData((void*)data.data(),data.size()*sizeof(vType),usage);
     m_ebo.uploadData((void*)indices.data(),indices.size()*sizeof(uint),usage);

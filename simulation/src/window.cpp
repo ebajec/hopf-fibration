@@ -1,4 +1,6 @@
 #include "window.h"
+#include <thread>
+#include <tuple>
 
 BaseViewWindow::BaseViewWindow(
 	const char* title, int width, int height, GLFWmonitor* monitor, GLFWwindow* share
@@ -140,7 +142,7 @@ void BaseViewWindow::disableCameraControls()
 
 void KeyManager::callKeyFunc(int key, int action)
 {
-	pair<int, int> operation({ key,action });
+	std::pair<int, int> operation({ key,action });
 
 	if (keymap.contains(operation)) keymap.at(operation)();
 
@@ -166,7 +168,7 @@ void CameraManager::start(WinState* state)
 	cam_motion_dir = { 0,0,0 };
 	cursor_pos = { 0,0 };
 	
-	updater = thread(&CameraManager::updateThread, this, state);
+	updater = std::thread(&CameraManager::updateThread, this, state);
 	return;
 }
 
