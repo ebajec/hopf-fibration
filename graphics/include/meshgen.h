@@ -25,10 +25,9 @@ struct LineInstance
     uint padding;
 };
 
-MultiIndex indicesFromInstance(Buffer& instances);
-
-std::vector<vec4> surfacePoints(vec3 param(float u, float v), const int uCount, const int vCount);
-std::vector<int> surfaceIndices(const int uCount, const int vCount, const int chi);
+extern MultiIndex indicesFromInstance(Buffer& instances);
+extern std::vector<vec4> surfacePoints(vec3 param(float u, float v), const int uCount, const int vCount);
+extern std::vector<int> surfaceIndices(const int uCount, const int vCount, const int chi);
 
 class MeshGen 
 {
