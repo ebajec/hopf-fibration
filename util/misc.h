@@ -16,6 +16,35 @@ static inline vec3 S2(GLfloat phi, GLfloat theta)
     return vec3{sin(theta)*cos(phi),sin(theta)*sin(phi),cos(theta)};
 }
 
+template<typename T>
+static constexpr unsigned int factorial(T x) {
+    return (x > 0) ? x*factorial(x-(T)1) : (T)1;
+}
+template<int n,typename T>
+static constexpr glm::mat<n,n,T> exp(glm::mat<n,n,T> mat) {
+    auto result = glm::mat<n,n,T>(1.0f);// 0
+    result = result + mat;//1
+    mat = mat*mat;//2
+    result = result + T(pow(factorial(2.0f),-1))*mat; 
+    mat = mat*mat;//3
+    result = result + T(pow(factorial(3.0f),-1))*mat;
+    mat = mat*mat;//4
+    result = result + T(pow(factorial(4.0f),-1))*mat;
+    return result;
+}
+
+static mat3 rotation(vec3 axis, float angle) 
+{   
+    axis = normalize(axis);
+    mat3 differential = mat3(
+         0,         -axis.z,   axis.y,
+         axis.z,   0,         -axis.x,
+        -axis.y,   axis.x,   0
+    );
+
+    mat3 rotation = exp(mat3(angle*differential));
+    return rotation;
+} 
 
 static inline int modulo(int dividend, int divisor) {
 	return (dividend % divisor + divisor) % divisor;
@@ -59,22 +88,7 @@ template<typename T> static std::vector<T> lerp(T start, T end, int steps)
     }
     return out;
 }
-template<typename T>
-static constexpr unsigned int factorial(T x) {
-    return (x > 0) ? x*factorial(x-(T)1) : (T)1;
-}
-template<int n,typename T>
-static constexpr matrix<n,n,T> exp(matrix<n,n,T> mat) {
-    auto result = matrix<n,n,T>::id();// 0
-    result = result + mat;//1
-    mat = mat*mat;//2
-    result = result + T(pow(factorial(2.0f),-1))*mat; 
-    mat = mat*mat;//3
-    result = result + T(pow(factorial(3.0f),-1))*mat;
-    mat = mat*mat;//4
-    result = result + T(pow(factorial(4.0f),-1))*mat;
-    return result;
-}
+
 
 static float uRand() 
 {

@@ -34,26 +34,26 @@
     vec4 p;
     auto s_color = [](GLfloat in_phi, GLfloat in_theta) {
         vec3 s = S2(in_phi/4,in_theta/2);
-        return vec4{(float)pow(*s[0],2),(float)pow(*s[1],2),(float)pow(*s[2],2),1};
+        return vec4{(float)pow(s[0],2),(float)pow(s[1],2),(float)pow(s[2],2),1};
     };   
 
     for (int i = 0; i < phi_step; i++) {
         for (int j = 0; j < theta_step; j++) {
             // First point
-            p = vec4(S2(phi[i],theta[j]));
-            memcpy(data_pos + idx, p.data(),4*sizeof(float));
+            p = vec4(S2(phi[i],theta[j]),0);
+            memcpy(data_pos + idx, &p,4*sizeof(float));
 
-            p = vec4(color);//s_color(phi[i],theta[j]);
-            memcpy(data_color + idx, p.data(),4*sizeof(float));
+            p = vec4(color,0);
+            memcpy(data_color + idx, &p,4*sizeof(float));
 
             idx += 4;
 
             // Second point
-            p = vec4(S2(phi[i+1],theta[j+1]));
-            memcpy(data_pos + idx, p.data(),4*sizeof(float));
+            p = vec4(S2(phi[i+1],theta[j+1]),0);
+            memcpy(data_pos + idx, &p,4*sizeof(float));
 
-            p = vec4(color);//s_color(phi[i+1],theta[j+1]);
-            memcpy(data_color + idx, p.data(),4*sizeof(float));
+            p = vec4(color,0);
+            memcpy(data_color + idx, &p,4*sizeof(float));
 
             idx += 4;
         }
@@ -107,18 +107,18 @@ void Sphere::setScale(GLfloat in_scale)
 }
 void Sphere::setPos(vec3 pos) 
 {
-    geometry[0][3] = pos[0][0];
-    geometry[1][3] = pos[1][0];
-    geometry[2][3] = pos[2][0];
+    geometry[0][3] = pos[0];
+    geometry[1][3] = pos[1];
+    geometry[2][3] = pos[2];
     return;
 }
 void Sphere::rotate(vec3 axis, GLfloat angle) 
 {   
     axis = normalize(axis);
     mat3 differential = mat3{
-         0,         -*axis[2],   *axis[1],
-         *axis[2],   0,         -*axis[0],
-        -*axis[1],   *axis[0],   0
+         0,         -axis[2],   axis[1],
+         axis[2],   0,         -axis[0],
+        -axis[1],   axis[0],   0
     };
     mat4 rotation = mat4(exp<>(angle*differential));
     geometry = geometry * rotation;

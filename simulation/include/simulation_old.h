@@ -28,7 +28,7 @@ public:
     void transform(mat4 trans);
 private:
 
-    mat4 geometry = mat4::id();
+    mat4 geometry = mat4(1.0f);
     std::vector<vec3> points;
     std::vector<vec3> pointColors;
     Sphere* sphere;
@@ -67,7 +67,7 @@ protected:
     Buffer lineInstances;
     PrimitiveData<LineData> hopfCircles;
 
-    mat4 model = mat4::id();
+    mat4 model = mat4(1.0f);
 
     vector<vec4> spherePointsCPU;
 

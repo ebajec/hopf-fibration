@@ -31,8 +31,7 @@ std::vector<vec4> surfacePoints(
             u = (float)i/(float)uCount;
             v = (float)j/(float)vCount;
 
-            vec4 p = param(u,v);
-            p[0][3] = 1;
+            vec4 p = vec4(param(u,v),1);
             points[i*uCount + j] = p;
         }
     }

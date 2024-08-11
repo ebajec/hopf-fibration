@@ -1,5 +1,8 @@
 #include "camera.h"
 #include <cstring>
+#include "glm/gtc/type_ptr.hpp"
+#include "glm/matrix.hpp"
+#include "misc.h"
 
 #define SIZE_F_MAT4 16
 
@@ -14,7 +17,7 @@ static mat3 viewCoordsLeftHanded(vec3 normal)
 	basis[0] = normalize(basis[0]);
 	basis[1] = normalize(basis[1]);
 
-	return basis[0]|basis[1]|basis[2];
+	return mat3(basis[0],basis[1],basis[2]);
 }
 
 Camera::Camera(vec3 normal, vec3 pos, int w, int h, GLfloat FOV, GLfloat near, GLfloat far)
@@ -38,32 +41,34 @@ Camera::~Camera()
 
 mat4 Camera::getViewMatrix()
 {
-	mat4 world = mat4(mat3::id() | -1 * (position - coords.col(2) * near));
-	return coords.transpose()* world;;
+	mat4 world = mat4(1.0f);
+	world[3] =	 vec4(-1.0f *(position - vec3(coords[2]) * near),1);
+	return glm::transpose(coords)*world;;
 }
 
 mat4 Camera::getProjMatrix()
 {
-	return mat4({
-		(1 / tan(fov / 2))*(aspect),0,0,0,
-		0,1 / tan(fov / 2),0,0,
-		0,0,far/(far - near),-far*near/(far - near),
-		0,0,1,0
-	});
+	return mat4(
+		vec4((1 / tan(fov / 2))*(aspect),0,0,0),
+		vec4(0,1 / tan(fov / 2),0,0),
+		vec4(0,0,far/(far - near),1),
+		vec4(0,0,-far*near/(far - near),0)
+	);
 }
 
 void Camera::updateUbo()
 {	
-	mat4 proj = getProjMatrix().transpose();
-	mat4 view = getViewMatrix().transpose();
+	mat4 proj = getProjMatrix();
+	mat4 view = getViewMatrix();
+	vec4 tempPos = vec4(position,1);
 
 	// Copy camera data into buffers
 	uint16_t dsize = 2*SIZE_F_MAT4 + 4 + 4 + 2;
 	GLfloat data[dsize];
-	memcpy(data, view.data(), SIZE_F_MAT4*sizeof(float));
-	memcpy(data + SIZE_F_MAT4, proj.data(), SIZE_F_MAT4*sizeof(float));
-	memcpy(data + 2*SIZE_F_MAT4, vec4(position).data(), 4*sizeof(float));
-	memcpy(data + 2*SIZE_F_MAT4 + 3, vec4(view).col(2).data(), 4*sizeof(float));
+	memcpy(data, glm::value_ptr(view), SIZE_F_MAT4*sizeof(float));
+	memcpy(data + SIZE_F_MAT4, glm::value_ptr(proj), SIZE_F_MAT4*sizeof(float));
+	memcpy(data + 2*SIZE_F_MAT4, glm::value_ptr(tempPos), 4*sizeof(float));
+	memcpy(data + 2*SIZE_F_MAT4 + 3, glm::value_ptr(view[2]), 4*sizeof(float));
 	data[2*SIZE_F_MAT4 + 8] = near;
 	data[2*SIZE_F_MAT4 + 8 + 1] = far;
 
@@ -81,14 +86,12 @@ void Camera::bindUbo(GLuint binding)
 void Camera::rotate(float pitch, float yaw)
 {
 	if (abs(pitch) > PI) return;
-	coords = mat4(rot_axis(vec3(coords.col(0)), pitch)) *  mat4(rot_axis(vec3{0,0,1},yaw)) * coords ;
+	coords = mat4(rotation(vec3(coords[0]), -pitch)) *  mat4(rotation(vec3(0,0,1),-yaw)) * coords ;
 }
 
 void Camera::translate(vec3 delta)
 {
-	vec3 offsetxy = vec3(vec2(coords.col(0)*delta[0][0] + coords.col(2)*delta[0][2]));
-	vec3 offsetz = vec3{0,0,1}*delta[0][1];
-    position = position + offsetxy + offsetz;
+    position = position + mat3(coords[0],vec3(0,0,1),vec3(coords[2].x,coords[2].y,0))*delta;
 }
 
 void Camera::resize(int width, int height)

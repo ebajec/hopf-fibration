@@ -11,8 +11,6 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-find_package(OpenGL REQUIRED)
-
 # External dependencies
 set(EXTERNAL_DEPS 
     external/linear-algebra/lib 
@@ -29,6 +27,7 @@ include_directories(
     ${EXTERNAL_DEPS}/*.h 
     graphics/include
     simulation/include
+    util
     )
 
 # Find source files
@@ -45,10 +44,22 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(GLEW_LIB ${CMAKE_SOURCE_DIR}/lib/glew32.lib)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(GLEW_LIB GLEW)
-    target_link_libraries(${PROJECT_NAME} m)
 else ()
 endif ()
 
+
+find_package(OpenGL REQUIRED)
+
+include(FetchContent)
+
+FetchContent_Declare(
+	glm
+	GIT_REPOSITORY	https://github.com/g-truc/glm.git
+	GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
+)
+FetchContent_MakeAvailable(glm)
+
+target_link_libraries(${PROJECT_NAME} glm::glm)
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} ${GLEW_LIB})
 target_link_libraries(${PROJECT_NAME} OpenGL::GL)

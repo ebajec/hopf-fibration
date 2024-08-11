@@ -18,17 +18,17 @@ BaseViewWindow::BaseViewWindow(
 		vec3& dir = this->m_cameraManager.cam_motion_dir;
 
 		this->m_keyManager.mapKey(GLFW_KEY_W, action, 
-			[&dir, mval]() {*dir[2] += +mval; });
+			[&dir, mval]() {dir.z += +mval; });
 		this->m_keyManager.mapKey(GLFW_KEY_A, action, 
-			[&dir, mval]() {*dir[0] += -mval; });
+			[&dir, mval]() {dir.x += -mval; });
 		this->m_keyManager.mapKey(GLFW_KEY_S, action, 
-			[&dir, mval]() {*dir[2] += -mval; });
+			[&dir, mval]() {dir.z += -mval; });
 		this->m_keyManager.mapKey(GLFW_KEY_D, action, 
-			[&dir, mval]() {*dir[0] += +mval; });
+			[&dir, mval]() {dir.x += +mval; });
 		this->m_keyManager.mapKey(GLFW_KEY_LEFT_SHIFT, action, 
-			[&dir, mval]() {*dir[1] += -mval; });
+			[&dir, mval]() {dir.y += -mval; });
 		this->m_keyManager.mapKey(GLFW_KEY_SPACE, action, 
-			[&dir, mval]() {*dir[1] += mval; });
+			[&dir, mval]() {dir.y += mval; });
 	};
 
 	map_movement(GLFW_PRESS);
@@ -156,7 +156,7 @@ void CameraManager::updateThread(WinState* state)
 	while (true) {
 		if (!state->is_running) return;
 		if (state->control_state == WinState::CONTROL_CAMERA)
-			cam->translate(cam_motion_dir * pow(cam_movespeed,2)*1e-4f);
+			cam->translate(cam_motion_dir * (float)pow(cam_movespeed,2)*1e-4f);
 	}
 	return;
 }
@@ -165,6 +165,7 @@ void CameraManager::start(WinState* state)
 {
 	cam_motion_dir = { 0,0,0 };
 	cursor_pos = { 0,0 };
+	
 	updater = thread(&CameraManager::updateThread, this, state);
 	return;
 }

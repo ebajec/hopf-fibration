@@ -58,17 +58,17 @@ void ShaderProgram::setUniform(const char* name, float value)
 
 void ShaderProgram::setUniform(const char* name, vec3 value)
 {
-	glUniform3fv(this->getUniform(name), 1, value.data());
+	glUniform3fv(this->getUniform(name), 1, glm::value_ptr(value));
 }
 
 void ShaderProgram::setUniform(const char* name, mat3 value, GLboolean transpose)
 {
-	glUniformMatrix3fv(this->getUniform(name), 1, transpose, value.data());
+	glUniformMatrix3fv(this->getUniform(name), 1, transpose, glm::value_ptr(value));
 }
 
 void ShaderProgram::setUniform(const char* name, mat4 value, GLboolean transpose)
 {
-	glUniformMatrix4fv(this->getUniform(name), 1, transpose, value.data());
+	glUniformMatrix4fv(this->getUniform(name), 1, transpose, glm::value_ptr(value));
 }
 
 ShaderManager::ShaderManager(const std::string& shaderPath)

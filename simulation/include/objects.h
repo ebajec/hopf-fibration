@@ -36,7 +36,7 @@ private:
     std::vector<GLsizei> draw_counts;    // For glMultiDrawArrays
 
     GLfloat scale = 1;
-    mat4 geometry = mat4::id();
+    mat4 geometry = mat4(1.0f);
 };
 
 

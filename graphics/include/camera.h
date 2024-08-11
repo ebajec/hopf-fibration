@@ -32,7 +32,7 @@ public:
 	mat4 getViewMatrix();
 	mat4 getProjMatrix();
 
-	vec3 coord(int i){return mat3(coords.col(i));}
+	vec3 coord(int i){return vec3(coords[i]);}
 
 	GLuint ubo;
 

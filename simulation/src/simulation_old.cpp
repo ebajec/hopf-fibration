@@ -41,7 +41,7 @@ void PointController::render(ShaderProgram& shader, const vector<vec4>& inpoints
     {
         float t = (float)i/(float)size;
         shader.setUniform("hsv",vec3{t,0.8,0.7});
-        sphere->setPos(vec3(geometry*vec4(p)));   
+        sphere->setPos(vec3(geometry*p));   
         sphere->render(shader);
         i++;
 
@@ -102,7 +102,7 @@ bool HopfSimulation::initFiberData()
     for (unsigned int i = 0; i < FIBER_COUNT; i++)
     {
         float t = (float)i/(float)FIBER_COUNT;
-        points[i] = vec4(spherePath(t));
+        points[i] = vec4(spherePath(t),1.0f);
         instances[i] = { FIBER_SIZE,i*FIBER_SIZE,1.0f,0};
     }
 
@@ -117,7 +117,7 @@ bool HopfSimulation::initFiberData()
 }
 bool HopfSimulation::initControllerData() 
 {
-    c_cam = new Camera(vec3({-1,0,0}),vec3({2,0,0}),CONTROL_VIEWPORT_SIZE,CONTROL_VIEWPORT_SIZE,PI/4);
+    c_cam = new Camera(vec3(-1,0,0),vec3(2,0,0),CONTROL_VIEWPORT_SIZE,CONTROL_VIEWPORT_SIZE,PI/4);
     c_sphere = new Sphere(128,128);
     m_controller = new PointController();
     return true;
@@ -148,7 +148,7 @@ void HopfSimulation::renderFibers()
 
     ShaderProgram shader = shaderManager->getProgram("default");
     shader.use();
-    shader.setUniform("model",mat4::id(),GL_FALSE);
+    shader.setUniform("model",mat4(1.0f),GL_FALSE);
     shader.setUniform("scale",1.0f);
 
     int c = 0;
@@ -175,8 +175,6 @@ void HopfSimulation::renderSpheres()
 
     light.use();
     glEnable(GL_BLEND);
-    //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    light.setUniform("hsv",vec3{0,0,0.1});
     c_sphere->render(temp);
 
     light.use();
