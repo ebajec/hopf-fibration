@@ -84,7 +84,7 @@ public:
 class BaseViewWindow {
 
 public:
-	BaseViewWindow(const char* title, int width, int height, GLFWmonitor* monitor = NULL, GLFWwindow* share = NULL);
+	BaseViewWindow(const char* title, int width, int height, int xwin, int ywin, GLFWmonitor* monitor = NULL, GLFWwindow* share = NULL);
 	~BaseViewWindow();
 	bool isRunning() { return this->m_state.is_running;}
 	void launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share );

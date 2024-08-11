@@ -3,7 +3,7 @@
 #include <tuple>
 
 BaseViewWindow::BaseViewWindow(
-	const char* title, int width, int height, GLFWmonitor* monitor, GLFWwindow* share
+	const char* title, int width, int height, int xwin, int ywin, GLFWmonitor* monitor, GLFWwindow* share
 ) : m_width(width), m_height(height) {
 
 	/************** SET UP KEYBINDS **************/
@@ -58,7 +58,7 @@ BaseViewWindow::BaseViewWindow(
 		glfwTerminate();
 	}
 	glfwMakeContextCurrent(m_window);
-	glfwSetWindowPos(m_window,300,300);
+	glfwSetWindowPos(m_window,xwin,ywin);
 
 	// start GLEW extension handler
 	glewExperimental = GL_TRUE;

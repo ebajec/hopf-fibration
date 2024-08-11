@@ -46,7 +46,7 @@ private:
  **********************************************************************************/
 class HopfSimulation : public BaseViewWindow {
 public:
-    HopfSimulation(const char* title, int width, int height);
+    HopfSimulation(const char* title, int width, int height, int x, int y);
     ~HopfSimulation();
 
 protected:

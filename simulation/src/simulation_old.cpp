@@ -59,7 +59,7 @@ void PointController::transform(mat4 trans)
  * Implementation details for HopfHopfSimulation.
  * 
  **********************************************************************************/
-HopfSimulation::HopfSimulation(const char* title, int width, int height) : BaseViewWindow(title, width, height,NULL,NULL) 
+HopfSimulation::HopfSimulation(const char* title, int width, int height, int x, int y) : BaseViewWindow(title, width, height,x,y,NULL,NULL) 
 {
     shaderManager = new ShaderManager("../graphics/shader/");
     windowLoop();
