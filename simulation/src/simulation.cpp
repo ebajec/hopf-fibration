@@ -7,7 +7,7 @@
 
 Simulation::Simulation(const char* title, int width, int height) : BaseViewWindow(title, width, height,NULL,NULL) 
 {
-    m_ui = new ImguiContextGLFW(m_window);
+    m_ui = new ImGuiContextGLFW(m_window);
     m_shaderManager = new ShaderManager("../graphics/shaders/");
 
     printf("-----------------------------\n");

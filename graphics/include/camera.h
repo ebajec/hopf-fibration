@@ -31,20 +31,21 @@ public:
 	);
 	~Camera();
 
-	void updateUbo();
-	void bindUbo(GLuint binding);
+	Camera& operator=(const Camera& other);
+
+	void bindUbo(GLuint binding) const;
 	void rotate(float pitch, float yaw);
-	void translate(vec3 delta);
+	void translate(vec3 delta,float speed);
+	mat4 getViewMatrix() const;
+	mat4 getProjMatrix() const;
+	vec3 coord(int i) const {return vec3(coords[i]);}
+
 	void resize(int width, int height);
-	mat4 getViewMatrix();
-	mat4 getProjMatrix();
-	vec3 coord(int i){return vec3(coords[i]);}
+	void updateUbo();
 
 	float fov, aspect, near, far;
-	vec3 viewPos;
 	vec3 position;
 	mat4 coords;
-	mat4 proj;
 	GLuint ubo;
 };
 

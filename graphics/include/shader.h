@@ -39,7 +39,7 @@ public:
 	bool addShader(const std::string& name, const std::string& path);
 	bool addProgram(const std::string& name, const std::vector<std::string>& shaders);
 
-	ShaderProgram getProgram(const std::string& name);
+	ShaderProgram& program(const std::string& name);
 private:
 	GLuint compileShader(GLenum type, const char* source);
 

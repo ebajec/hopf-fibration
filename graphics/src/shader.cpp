@@ -1,3 +1,4 @@
+#include <stdexcept>
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -171,11 +172,12 @@ bool ShaderManager::addProgram(const std::string& name, const std::vector<std::s
 	}
 }
 
-ShaderProgram ShaderManager::getProgram(const std::string& name)
+ShaderProgram& ShaderManager::program(const std::string& name)
 {
 	if (m_programs.count(name))
 		return m_programs[name];
-	return {0};
+	else 
+		throw std::runtime_error("Program does not exist:" + name + "\n");
 }
 
 GLuint ShaderManager::compileShader(GLenum type, const char* source)

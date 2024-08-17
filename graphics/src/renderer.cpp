@@ -18,14 +18,14 @@ int MultiIndex::totalCount()
 
 Buffer::Buffer() : m_size(0) , m_id(0)
 {
-    glGenBuffers(1,&m_id);
+   glGenBuffers(1,&m_id);
 }
 
 Buffer::Buffer(size_t size,GLenum usage) : m_size(size) , m_id(0)
 {
-    glGenBuffers(1,&m_id);
     glBindBuffer(GL_ARRAY_BUFFER,m_id);
     glBufferData(GL_ARRAY_BUFFER,size,nullptr,usage);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
 Buffer::~Buffer()
@@ -41,6 +41,7 @@ void Buffer::uploadData(void* data, size_t size, GLenum usage)
     else 
         glBufferData(GL_ARRAY_BUFFER,size,data,usage);
     m_size = size;
+    glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
 Renderer::Renderer() 
@@ -50,9 +51,4 @@ Renderer::Renderer()
 void Renderer::setShaderManager(ShaderManager *shaderManager)
 {
     shaders = shaderManager;
-}
-
-void Renderer::renderMesh(Camera *camera, PrimitiveData<Vertex> mesh)
-{
-    camera->bindUbo(0);
 }

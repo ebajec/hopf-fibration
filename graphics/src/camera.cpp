@@ -20,6 +20,18 @@ static mat3 orthCoordsLeft(vec3 normal)
 	return mat3(basis[0],basis[1],basis[2]);
 }
 
+//Camera::Camera() : 
+//	fov(PI/4), 
+//	near(1), 
+//	far(1000), 
+//	position(0,0,0),
+//	coords(mat4(orthCoordsLeft(vec3(1,0,0)))),
+//	aspect(1)
+//{
+//	glGenBuffers(1,&ubo);
+//	updateUbo();
+//}
+
 Camera::Camera(vec3 normal, vec3 pos, int w, int h, GLfloat FOV, GLfloat near, GLfloat far)
 	:
 	fov(FOV),
@@ -39,14 +51,27 @@ Camera::~Camera()
 	glDeleteBuffers(1,&ubo);
 }
 
-mat4 Camera::getViewMatrix()
+Camera& Camera::operator=(const Camera& other)
+{
+	this->fov = other.fov;
+ 	this->coords = other.coords;
+ 	this->near = other.near;
+ 	this->aspect = other.aspect;
+ 	this->far = other.far;
+ 	this->position = other.position;
+ 	this->updateUbo();
+ 	return *this;
+}
+
+mat4 Camera::getViewMatrix() const
 {
 	mat4 world = mat4(1.0f);
-	world[3] =	 vec4(-1.0f *(position - vec3(coords[2]) * near),1);
+	vec3 viewPos = position - vec3(coords[2]) * near;
+	world[3] = vec4(-1.0f *viewPos,1);
 	return glm::transpose(coords)*world;;
 }
 
-mat4 Camera::getProjMatrix()
+mat4 Camera::getProjMatrix() const
 {
 	return mat4(
 		vec4((1 / tan(fov / 2))*(aspect),0,0,0),
@@ -78,7 +103,7 @@ void Camera::updateUbo()
 
 	return;
 }
-void Camera::bindUbo(GLuint binding) 
+void Camera::bindUbo(GLuint binding) const
 {
 	glBindBufferBase(GL_UNIFORM_BUFFER,binding,ubo);
 }
@@ -86,12 +111,15 @@ void Camera::bindUbo(GLuint binding)
 void Camera::rotate(float pitch, float yaw)
 {
 	if (fabs(pitch) > PI) return;
-	coords = mat4(rotation(vec3(coords[0]), -pitch)) *  mat4(rotation(vec3(0,0,1),-yaw)) * coords ;
+	coords = mat4(rotation(vec3(coords[0]), -pitch)) *  mat4(rotation(vec3(0,0,1),-yaw)) * coords;
 }
 
-void Camera::translate(vec3 delta)
+void Camera::translate(vec3 delta, float speed)
 {
-    position = position + mat3(coords[0],vec3(0,0,1),vec3(coords[2].x,coords[2].y,0))*delta;
+	vec3 offsetxy = delta.x*vec3(coords[0]) + delta.z*normalize(vec3(vec2(coords[2]),0));
+	vec3 offsetz = delta.y*vec3(0,0,1);
+
+    position = position + speed*(offsetxy+offsetz);
 }
 
 void Camera::resize(int width, int height)

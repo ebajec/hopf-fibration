@@ -16,20 +16,28 @@
 
 typedef unsigned int uint;
 
-struct Vertex
+typedef struct
 {
     vec4 position;
-    vec4 normal;
     vec4 color;
-};
+    vec4 normal;
+} Vertex;
 
-struct MultiIndex
+typedef struct 
+{
+    uint  count;
+    uint  instanceCount;
+    uint  first;
+    uint  baseInstance;
+} DrawArraysIndirectCommand;
+
+typedef struct
 {
     std::vector<int> indices;
     int totalCount();
     int* firsts();
     int* counts();
-};
+} MultiIndex;
 
 /*************************************************************************
  * 
@@ -97,8 +105,12 @@ public:
     void bind() const; 
     void unbind() const;
 
+    size_t attribCount() {return m_vbo.size()/sizeof(vType);}
+    size_t indexCount() {return m_ebo.size()/sizeof(uint);}
+
     MultiIndex* getMultiDrawIndices();
-    void setMultiDrawIndices(MultiIndex indices);
+    void setMultiDrawIndices(const MultiIndex& indices);
+    void setMultiDrawIndices(MultiIndex&& indices);
 
     const Buffer * const vbo(){return &m_vbo;}
     const Buffer * const ebo(){return &m_ebo;}
@@ -123,8 +135,6 @@ public:
     Renderer();
     ~Renderer() {}
     void setShaderManager(ShaderManager* shaderManager);
-
-    void renderMesh(Camera* camera, PrimitiveData<Vertex> mesh);
 protected:
     ShaderManager * shaders;
 };
@@ -137,6 +147,8 @@ protected:
 template <typename T>
 inline void Buffer::uploadData(std::vector<T> data, GLenum usage)
 {
+    if (!m_id) glGenBuffers(1,&m_id);
+    
     size_t size = data.size()*sizeof(T);
     glBindBuffer(GL_ARRAY_BUFFER,m_id);
 
@@ -149,6 +161,7 @@ inline void Buffer::uploadData(std::vector<T> data, GLenum usage)
         glBufferData(GL_ARRAY_BUFFER,size,data.data(),usage);  
     }
     m_size = size;
+    glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
 template<typename T>
@@ -169,6 +182,13 @@ T BufferMap<T>::operator[](size_t index)
 {   
     return data[index];
 };
+
+template<typename T>
+void BufferMap<T>::unmap()
+{
+    glUnmapNamedBuffer(m_id);
+    data = nullptr;
+}
 
 /*************************************************************************
  * 
@@ -196,6 +216,8 @@ void PrimitiveData<vType>::uploadData(const std::vector<vType>& data, const std:
 
     glBindVertexArray(m_vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,m_ebo.id());
+    glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 }
 
 template<typename vType>
@@ -286,9 +308,15 @@ MultiIndex* PrimitiveData<vType>::getMultiDrawIndices()
     return &m_multiIndex;
 }
 template <typename vType>
-void PrimitiveData<vType>::setMultiDrawIndices(MultiIndex indices)
+void PrimitiveData<vType>::setMultiDrawIndices(const MultiIndex& indices)
 {
     this->m_multiIndex = indices;
+}
+
+template <typename vType>
+void PrimitiveData<vType>::setMultiDrawIndices(MultiIndex&& indices)
+{
+    this->m_multiIndex = std::move(indices);
 }
 
 #endif

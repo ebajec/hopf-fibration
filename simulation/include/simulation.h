@@ -23,7 +23,7 @@ protected:
     void windowLoop();
 
     ShaderManager * m_shaderManager;
-    ImguiContextGLFW * m_ui;
+    ImGuiContextGLFW * m_ui;
 };
 
 #endif

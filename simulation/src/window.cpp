@@ -63,10 +63,6 @@ BaseViewWindow::BaseViewWindow(
 	// start GLEW extension handler
 	glewExperimental = GL_TRUE;
 	glewInit();
-
-	glfwSetWindowUserPointer(m_window, this);
-	glfwSetKeyCallback(m_window, keyCallback);
-	glfwSetCursorPosCallback(m_window, cursorPosCallback);
 	
 	const GLubyte* _renderer = glGetString(GL_RENDERER);
 	const GLubyte* _version = glGetString(GL_VERSION);
@@ -74,16 +70,20 @@ BaseViewWindow::BaseViewWindow(
 	printf("Renderer: %s\n", _renderer);
 	printf("OpenGL version supported %s\n", _version);
 
+	glfwSetWindowUserPointer(m_window, this);
+	glfwSetKeyCallback(m_window, keyCallback);
+	glfwSetCursorPosCallback(m_window, cursorPosCallback);
+
 		/************** SET UP CAMERA **************/
 	m_camera = Camera(
 		vec3({ -1,0,0 }),
-		vec3({ 10,0,0 }),
+		vec3({ 0,0,0 }),
 		m_width,
 		m_height,
-		PI / 4);
+		PI/4,
+		10);
 	m_cameraManager.attach(&m_camera);
 	m_cameraManager.start(&this->m_state);
-
 	m_state.is_running = true;
 }
 
@@ -158,7 +158,7 @@ void CameraManager::updateThread(WinState* state)
 	while (true) {
 		if (!state->is_running) return;
 		if (state->control_state == WinState::CONTROL_CAMERA)
-			cam->translate(cam_motion_dir * (float)pow(cam_movespeed,2)*1e-4f);
+			cam->translate(cam_motion_dir, cam_movespeed*1e-5f);
 	}
 	return;
 }

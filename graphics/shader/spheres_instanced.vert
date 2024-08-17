@@ -1,6 +1,7 @@
 #version 430 core
 
-layout (std140,binding = 0) uniform Camera {
+layout (std140,binding = 0) uniform Camera 
+{
     mat4 view;
     mat4 proj;
 	mat4 pv;
@@ -8,6 +9,18 @@ layout (std140,binding = 0) uniform Camera {
 	vec4 cam_dir;
 	float near;
 	float far;
+};
+
+
+struct SpherePointData
+{
+    vec4 position;
+    vec4 color;
+};
+
+layout (std430,binding = 0) buffer PointData
+{
+	SpherePointData data[];
 };
 
 uniform mat4 model;
@@ -22,11 +35,14 @@ out vec3 fpos;
 out vec3 fnormal;
 
 void main() {
+
+	vec4 offset = data[gl_InstanceID].position;
+	
 	// Apply geometry transformation
-	vec4 position = model*vec4(scale*v_pos.xyz,1);
+	vec4 position = model*vec4(scale*v_pos.xyz + offset.xyz,1);
 	vec4 normal = model*vec4(v_normal.xyz,0);
 
-	fcolor = v_color;
+	fcolor = data[gl_InstanceID].color;
 	fpos = vec3(position);
 	fnormal = vec3(normal);
 

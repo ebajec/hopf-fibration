@@ -4,18 +4,38 @@ uniform uint numFibers;
 
 layout (local_size_x = 16,local_size_y = 32,local_size_z = 1) in;
 
-// Input buffer containing points on a sphere
-layout (std430, binding = 0) buffer inputData
+
+struct SpherePointData
 {
-    vec4 spherePoints[];
+    vec4 position;
+    vec4 color;
+};
+
+struct DrawArraysIndirectCommand
+{
+    uint  count;
+    uint  instanceCount;
+    uint  first;
+    uint  baseInstance;
 };
 
 struct InstanceData
 {
-    uint size;
-    uint firstOffset;
+    DrawArraysIndirectCommand command;
     float width;
     uint padding;
+};
+
+struct LineData 
+{
+    vec4 position; 
+    vec4 color;  
+};
+
+// Input buffer containing points on a sphere
+layout (std430, binding = 0) buffer InputData
+{
+    SpherePointData inputData[];
 };
 
 // Data for each polyline instance, required to correctly access input
@@ -23,12 +43,6 @@ struct InstanceData
 layout (std430, binding = 1) buffer instanceData
 {
     InstanceData instance[];
-};
-
-struct LineData 
-{
-    vec4 position; 
-    vec4 color;  
 };
 
 // Output data for each polyline. 
@@ -53,17 +67,6 @@ vec4 stereo_proj(vec4 v) {
     return vec4(v.x / (1 - v.w), v.y / (1 - v.w), v.z / (1 - v.w), 1);
 }
 
-vec3 hsvtorgb(vec3 c) {
-    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-}
-
-vec3 sphereToColor(vec3 point) {
-
-    float u = asin(point.z)/3.141593654;
-    return hsvtorgb(vec3(u,1,1));
-}
 
 void main() {   
     uvec3 id = gl_GlobalInvocationID;
@@ -71,9 +74,10 @@ void main() {
     if (id.x >= numFibers)
         return;
 
-    uint size = instance[id.x].size;    
-    uint offset = instance[id.x].firstOffset;
-    vec4 s2_point = spherePoints[id.x];
+    uint size = instance[id.x].command.count;    
+    uint offset = instance[id.x].command.first;
+
+    vec4 s2_point = inputData[id.x].position;
 
     if (id.y >= size)
         return;
@@ -85,5 +89,5 @@ void main() {
     result = stereo_proj(result);
 
     outputPoints[offset + id.y].position = vec4(result.xyz,1);
-    outputPoints[offset + id.y].color = vec4(sphereToColor(s2_point.xyz),1);;
+    outputPoints[offset + id.y].color = inputData[id.x].color;
 }
