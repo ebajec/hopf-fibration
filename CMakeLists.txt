@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.5)
 set(PROJECT_NAME "hopf")
 list(APPEND CMAKE_MODULE_PATH $ENV{CMAKE_MODULE_PATH})
 project(${PROJECT_NAME})
@@ -31,6 +31,7 @@ include_directories(
 
 # Find source files
 file(GLOB SOURCES 
+    "util/*.cpp"
     "graphics/src/*.cpp" 
     "simulation/src/*.cpp"
     ${EXTERNAL_SOURCES}
