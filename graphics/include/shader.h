@@ -27,11 +27,18 @@ struct ShaderProgram
 	void dispatchCompute(const uint countX, const uint countY, const uint countZ);
 };
 
+/**
+ * Stores a record of compiled shaders and linked programs. 
+ */
 class ShaderManager
 {
 
 public:
 	ShaderManager() {}
+
+	/**
+	 * Create a ShaderManager which compiles all files in a given directory.
+	 */	
 	ShaderManager(const std::string& shaderPath);
 	~ShaderManager() {}
 

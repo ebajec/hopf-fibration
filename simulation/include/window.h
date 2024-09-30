@@ -4,10 +4,12 @@
 #define GLFW_WINDOW_H
 #include <GL/glew.h> 
 #include <GLFW/glfw3.h>
+#include <glm/vec2.hpp>
 #include <thread>
 #include <functional>
 #include <map>
 #include "camera.h"
+#include "ui.h"
 
 class CamManager;
 class KeyManager;
@@ -41,41 +43,6 @@ public:
 	void callKeyFunc(int key, int action);
 };
 
-/*Manages camera operations for BaseViewWindow. Updates to position and 
-* orientation are performed on "_updater_thread."
-*
-* For this to work, attach(Camera*) must be called on a camera instance
-* to allow this class to update it. 
-*/
-class CameraManager {
-private:
-	std::thread updater;
-	Camera* cam;
-	vec2 cursor_pos = { 0,0 };
-
-	void updateThread(WinState* state);
-public:
-
-	/*Camera will move in this direction each camera update. Camera::translate()
-	* is called with motion_dir as the argument.*/
-	vec3 cam_motion_dir = { 0,0,0 };
-	float cam_movespeed = 0.2;
-	float cam_sensitivity = 0.004;
-
-	CameraManager() {}
-
-	//sets Camera object to be controlled
-	void attach(Camera* in_cam);
-	//launches thread which contiuously updates camera
-	void start(WinState* state);
-	//terminates updater thread
-	void stop();
-	//rotates camera based of difference between old and new cursor pos
-	void rotate(double x_new, double y_new);
-
-	friend class BaseViewWindow;
-};
-
 /*
 * Provides a base for creating windows with GLFW.  Natively handles keyboard
 * input, mouse input, and camera controls.  By default, moves camera with WASD
@@ -103,9 +70,6 @@ protected:
 
 	//callback for keyboard input event
 	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-	//callback for cursor position update event
-	static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 	
 	void enableCameraControls();
 	void disableCameraControls();
@@ -113,11 +77,12 @@ protected:
 	int m_height;
 	int m_width;
 
+	vec2 m_mousePos;
+
 	GLFWwindow* m_window = NULL;
 	WinState m_state;
 	Camera m_camera;
 	KeyManager m_keyManager;
-	CameraManager m_cameraManager;
 };
 
 

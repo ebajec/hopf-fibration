@@ -44,6 +44,14 @@ void Buffer::uploadData(void* data, size_t size, GLenum usage)
     glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
+void Buffer::reserve(size_t size,GLenum usage)
+{
+    glBindBuffer(GL_ARRAY_BUFFER,m_id);
+    glBufferData(GL_ARRAY_BUFFER,size,nullptr,usage);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+    m_size = size;
+}
+
 Renderer::Renderer() 
 {
 }

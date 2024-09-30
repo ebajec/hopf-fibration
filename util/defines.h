@@ -10,8 +10,8 @@
 #include <GL/glew.h>
 #include <glm/detail/type_vec2.hpp>
 
-#define FIBER_COUNT 1000       // Number of fibers to compute
-#define FIBER_SIZE 400            // Number of samples in each fiber
+#define FIBER_COUNT 100   // Number of fibers to compute
+#define FIBER_SIZE 400       // Number of samples in each fiber
 
 #ifndef PI
 #define PI 3.141592654f

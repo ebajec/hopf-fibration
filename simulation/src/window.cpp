@@ -4,52 +4,8 @@
 
 BaseViewWindow::BaseViewWindow(
 	const char* title, int width, int height, int xwin, int ywin, GLFWmonitor* monitor, GLFWwindow* share
-) : m_width(width), m_height(height) {
-
-	/************** SET UP KEYBINDS **************/
-
-	auto map_movement = [this](int action) {
-		//mval determines whether motion in a direction should start or stop
-		int mval = 0;
-		switch (action)
-		{
-			case GLFW_PRESS:   mval =  1; break;
-			case GLFW_RELEASE: mval = -1; break;
-		}
-
-		vec3& dir = this->m_cameraManager.cam_motion_dir;
-
-		this->m_keyManager.mapKey(GLFW_KEY_W, action, 
-			[&dir, mval]() {dir.z += +mval; });
-		this->m_keyManager.mapKey(GLFW_KEY_A, action, 
-			[&dir, mval]() {dir.x += -mval; });
-		this->m_keyManager.mapKey(GLFW_KEY_S, action, 
-			[&dir, mval]() {dir.z += -mval; });
-		this->m_keyManager.mapKey(GLFW_KEY_D, action, 
-			[&dir, mval]() {dir.x += +mval; });
-		this->m_keyManager.mapKey(GLFW_KEY_LEFT_SHIFT, action, 
-			[&dir, mval]() {dir.y += -mval; });
-		this->m_keyManager.mapKey(GLFW_KEY_SPACE, action, 
-			[&dir, mval]() {dir.y += mval; });
-	};
-
-	map_movement(GLFW_PRESS);
-	map_movement(GLFW_RELEASE);
-
-	// Press ESC to enable or disable camera controls
-	m_keyManager.mapKey(GLFW_KEY_ESCAPE, GLFW_PRESS, [this]()
-	{ 
-		if (m_state.control_state == WinState::CONTROL_CAMERA) 
-		{
-			disableCameraControls(); 
-			m_state.control_state = WinState::CONTROL_GUI;
-		}
-		else  
-		{
-			enableCameraControls(); 
-			m_state.control_state = WinState::CONTROL_CAMERA;
-		}
-	});
+) : m_width(width), m_height(height) 
+{
 
 	// Create glfw context
 	m_window = glfwCreateWindow(m_width, m_height, title, monitor, share);
@@ -72,8 +28,6 @@ BaseViewWindow::BaseViewWindow(
 
 	glfwSetWindowUserPointer(m_window, this);
 	glfwSetKeyCallback(m_window, keyCallback);
-	glfwSetCursorPosCallback(m_window, cursorPosCallback);
-
 		/************** SET UP CAMERA **************/
 	m_camera = Camera(
 		vec3({ -1,0,0 }),
@@ -82,15 +36,14 @@ BaseViewWindow::BaseViewWindow(
 		m_height,
 		PI/4,
 		10);
-	m_cameraManager.attach(&m_camera);
-	m_cameraManager.start(&this->m_state);
+
 	m_state.is_running = true;
 }
 
 BaseViewWindow::~BaseViewWindow()
 {
 	disableCameraControls();
-	m_cameraManager.stop();
+	// m_cameraManager.stop();
 	m_state.is_running = false;
 	glfwDestroyWindow(m_window);
 }
@@ -102,41 +55,31 @@ void BaseViewWindow::keyCallback(GLFWwindow* window, int key, int scancode, int 
 	win->m_keyManager.callKeyFunc(key, action);
 }
 
-void BaseViewWindow::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
-{
-	auto win = static_cast<BaseViewWindow*>(glfwGetWindowUserPointer(window));
-	int width, height;
-    glfwGetWindowSize(window, &width, &height);
-
-	auto dx = xpos - width/2;
-	auto dy = ypos - height/2;
-
-	if (win->m_state.control_state == WinState::CONTROL_CAMERA) {
-		win->m_cameraManager.rotate(dx,dy);
-		glfwSetCursorPos(window,width/2,height/2);
-	}	
-}
-
 void BaseViewWindow::enableCameraControls()
 {
+	if (m_state.control_state == WinState::CONTROL_CAMERA) 
+		return;
+	
 	//Center cursor so camera does not jerk
 	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (glfwRawMouseMotionSupported()) {
 		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 	}
-	glfwSetCursorPos(m_window,m_width/2,m_height/2);
 	m_state.control_state = WinState::CONTROL_CAMERA;
 	return;
 }
 
 void BaseViewWindow::disableCameraControls()
 {
-	m_state.control_state = WinState::CONTROL_GUI;
+	if (m_state.control_state == WinState::CONTROL_GUI)
+		return;
+
 	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	if (glfwRawMouseMotionSupported()) {
 		glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 	}
+	m_state.control_state = WinState::CONTROL_GUI;
 	return;
 }
 
@@ -148,41 +91,3 @@ void KeyManager::callKeyFunc(int key, int action)
 
 	return;
 }
-
-void CameraManager::attach(Camera* in_cam) {
-	this->cam = in_cam;
-}
-
-void CameraManager::updateThread(WinState* state)
-{
-	while (true) {
-		if (!state->is_running) return;
-		if (state->control_state == WinState::CONTROL_CAMERA)
-			cam->translate(cam_motion_dir, cam_movespeed*1e-5f);
-	}
-	return;
-}
-
-void CameraManager::start(WinState* state)
-{
-	cam_motion_dir = { 0,0,0 };
-	cursor_pos = { 0,0 };
-	
-	updater = std::thread(&CameraManager::updateThread, this, state);
-	return;
-}
-
-void CameraManager::stop()
-{
-	updater.detach();
-	return;
-}
-
-void CameraManager::rotate(double dx, double dy)
-{
-	dx *= -cam_sensitivity;
-	dy *= -cam_sensitivity;
-	cam->rotate(dy, dx);
-	return;
-}
-

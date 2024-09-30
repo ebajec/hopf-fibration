@@ -1,4 +1,5 @@
 #include "camera.h"
+#include <complex>
 #include <cstring>
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/matrix.hpp"
@@ -19,18 +20,6 @@ static mat3 orthCoordsLeft(vec3 normal)
 
 	return mat3(basis[0],basis[1],basis[2]);
 }
-
-//Camera::Camera() : 
-//	fov(PI/4), 
-//	near(1), 
-//	far(1000), 
-//	position(0,0,0),
-//	coords(mat4(orthCoordsLeft(vec3(1,0,0)))),
-//	aspect(1)
-//{
-//	glGenBuffers(1,&ubo);
-//	updateUbo();
-//}
 
 Camera::Camera(vec3 normal, vec3 pos, int w, int h, GLfloat FOV, GLfloat near, GLfloat far)
 	:
@@ -111,15 +100,16 @@ void Camera::bindUbo(GLuint binding) const
 void Camera::rotate(float pitch, float yaw)
 {
 	if (fabs(pitch) > PI) return;
-	coords = mat4(rotation(vec3(coords[0]), -pitch)) *  mat4(rotation(vec3(0,0,1),-yaw)) * coords;
+	coords = mat4(rotation(vec3(coords[0]), -pitch) * rotation(vec3(0,0,1),-yaw)) * coords;
 }
 
 void Camera::translate(vec3 delta, float speed)
 {
-	vec3 offsetxy = delta.x*vec3(coords[0]) + delta.z*normalize(vec3(vec2(coords[2]),0));
-	vec3 offsetz = delta.y*vec3(0,0,1);
+	float mag = glm::dot(delta,delta);
 
-    position = position + speed*(offsetxy+offsetz);
+	mat3 offsets = mat3(vec3(coords[0]),vec3(0,0,1),vec3(vec2(coords[2]),0));
+	
+	if (mag) position = position + speed*normalize(offsets*delta);
 }
 
 void Camera::resize(int width, int height)

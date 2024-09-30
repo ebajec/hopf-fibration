@@ -17,6 +17,20 @@ struct TangentFrame
     vec4 B;
 };
 
+struct Vertex
+{
+    vec4 position;
+    vec4 color;
+    vec4 normal;
+};
+
+struct InstanceLine
+{
+    DrawArraysIndirectCommand cmd;
+    float width;
+    float avgLength;
+};
+
 /**
 * Sample points from the parameterization of a surface.  Also returns indices
 * for a mesh created from the points. The topology can be specified by setting the

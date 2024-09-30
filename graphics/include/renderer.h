@@ -15,14 +15,6 @@
  *************************************************************************/
 
 typedef unsigned int uint;
-
-typedef struct
-{
-    vec4 position;
-    vec4 color;
-    vec4 normal;
-} Vertex;
-
 typedef struct 
 {
     uint  count;
@@ -56,6 +48,8 @@ public:
     template<typename T>
     void uploadData(std::vector<T> data, GLenum usage = GL_STREAM_DRAW);
     void uploadData(void * data, size_t size, GLenum usage = GL_STREAM_DRAW);
+
+    void reserve(size_t size,GLenum usage = GL_STREAM_DRAW);
 
     const size_t size() const {return m_size;}
     const GLuint id() const {return m_id;}
@@ -95,15 +89,16 @@ public:
     void uploadData(const std::vector<vType>& data, GLenum usage);
     void uploadData(const std::vector<vType>& data, const std::vector<uint>& indices, GLenum usage);
 
-    void reserveAttribData(size_t count, GLenum usage = GL_STREAM_DRAW);
-    void reserveIndexData(size_t count, GLenum usage = GL_STREAM_DRAW);
+    void reserveAttribs(size_t count, GLenum usage = GL_STREAM_DRAW);
+    void reserveIndices(size_t count, GLenum usage = GL_STREAM_DRAW);
 
-    void attribPointer(GLuint location, GLint size, GLenum type, GLboolean normalized, const void* pointer);
+    void attribPointer(GLuint location, GLint size, GLenum type, GLboolean normalized, 
+    const void* pointer, GLuint buffer = -1);
     void attribIPointer(GLuint location, GLint size, GLenum type, const void* pointer);
     void attribLPointer(GLuint location, GLint size, GLenum type, const void* pointer);
 
-    void bind() const; 
-    void unbind() const;
+    void bindArray() const; 
+    void unbindArray() const;
 
     size_t attribCount() {return m_vbo.size()/sizeof(vType);}
     size_t indexCount() {return m_ebo.size()/sizeof(uint);}
@@ -112,8 +107,8 @@ public:
     void setMultiDrawIndices(const MultiIndex& indices);
     void setMultiDrawIndices(MultiIndex&& indices);
 
-    const Buffer * const vbo(){return &m_vbo;}
-    const Buffer * const ebo(){return &m_ebo;}
+    Buffer * vbo(){return &m_vbo;}
+    Buffer * ebo(){return &m_ebo;}
 
 private:
     GLuint m_vao;
@@ -221,31 +216,31 @@ void PrimitiveData<vType>::uploadData(const std::vector<vType>& data, const std:
 }
 
 template<typename vType>
-void PrimitiveData<vType>::reserveAttribData(size_t count, GLenum usage)
+void PrimitiveData<vType>::reserveAttribs(size_t count, GLenum usage)
 {
-    glBindBuffer(GL_ARRAY_BUFFER,m_vbo.id());
-    glBufferData(GL_ARRAY_BUFFER,count*sizeof(vType),nullptr,usage);
-    glBindBuffer(GL_ARRAY_BUFFER,0);
+    glBindVertexArray(m_vao);
+    m_vbo.reserve(count*sizeof(vType),usage);
+    glBindVertexArray(0);
 }
 
 template<typename vType>
-void PrimitiveData<vType>::reserveIndexData(size_t count, GLenum usage)
+void PrimitiveData<vType>::reserveIndices(size_t count, GLenum usage)
 {
     glBindVertexArray(m_vao);
+    m_ebo.reserve(count*sizeof(uint),usage);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,m_ebo.id());
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,count*sizeof(vType),nullptr,usage);
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 }
 
 template <typename vType>
-void PrimitiveData<vType>::bind() const
+void PrimitiveData<vType>::bindArray() const
 {
     glBindVertexArray(m_vao);
 }
 
 template <typename vType>
-void PrimitiveData<vType>::unbind() const
+void PrimitiveData<vType>::unbindArray() const
 {
     glBindVertexArray(0);
 }
@@ -256,11 +251,13 @@ void PrimitiveData<vType>::attribPointer(
         GLint          size,       // Number of components in attribute (i.e., for vec4 this would be 4).
         GLenum         type,       // Data type.
         GLboolean      normalized, // Whether to normalize float data.
-        const void*    pointer     // Byte offset from beginning of VBO to first occurence of this attribute.
+        const void*    pointer,     // Byte offset from beginning of VBO to first occurence of this attribute.
+        GLuint         buffer
     )
 {
     glBindVertexArray(m_vao);
-    glBindBuffer(GL_ARRAY_BUFFER,m_vbo.id());
+    // if buffer was not specified, use the primitive data
+    glBindBuffer(GL_ARRAY_BUFFER,buffer == -1 ? m_vbo.id() : buffer);
     glEnableVertexAttribArray(location);
     glVertexAttribPointer(location,size,type,normalized,sizeof(vType),pointer);
 
