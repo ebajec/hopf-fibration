@@ -35,8 +35,12 @@ vec3 hsvtorgb(vec3 c) {
 
 void main()
 { 
+    vec3 diff = cam_pos.xyz - fpos;
+    float dist = dot(diff,diff);
 
-    vec4 color =    calc_light(vec3(5,5,5),fcolor)
-                +   calc_light(vec3(5,8,-8),fcolor);
-    FragColor = color;
+    vec3 lpos = vec3(0,0,10);
+
+    vec4 color = calc_light(cam_pos.xyz,fcolor);
+
+    FragColor = color;//vec4(abs(normalize(fnormal)),1);
 } 

@@ -1,4 +1,4 @@
-#include "simulation_old.h"
+#include "simulation.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720

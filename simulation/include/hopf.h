@@ -1,9 +1,10 @@
 #ifndef HOPF_H
 #define HOPF_H
 
-#include <memory>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include <memory>
 
 #include "mesh.h"
 #include "renderer.h"
@@ -23,39 +24,45 @@ struct SpherePointData
     vec4 color;
 };
 
-struct InstanceLine
+struct SimulationParams
 {
-    DrawArraysIndirectCommand cmd;
-    float width;
-    uint padding;
+    float animSpeed;
+    float tOffset;
+    int   maxFibers;
+    int   lineDetail = 8;
+    bool  drawMesh;
+    bool  drawLines;
 };
-
 class SphereController
 {
 public:
-    SphereController(const std::shared_ptr<ShaderManager>& shaderManager);
+    SphereController(
+        std::shared_ptr<ShaderManager>& shaderManager, 
+        std::shared_ptr<SimulationParams>& params);
 
     void updateBallPositions();
     void render(Camera& camera);
     void transform(mat4 trans);
-    const Buffer& getPoints() {return points;}
+    const Buffer& getPoints() {return m_points;}
     void uploadPointData(void* data, size_t size);
 
 private:
-    Buffer points;
+    Buffer m_points;
     Mesh m_sphereMesh;
     Camera m_camera;
-    mat4 geometry = mat4(1.0f);
+    mat4 m_geometry = mat4(1.0f);
 
     int pointCount;
 
-    std::weak_ptr<ShaderManager> m_shaderManager;
+    std::shared_ptr<SimulationParams> m_params;
+    std::shared_ptr<ShaderManager> m_shaderManager;
 };
-
 class HopfFibrationDisplay
 {
 public:
-    HopfFibrationDisplay(const std::shared_ptr<ShaderManager>& shaderManager);
+    HopfFibrationDisplay(
+        std::shared_ptr<ShaderManager>& shaderManager, 
+        std::shared_ptr<SimulationParams>& params);
 
     void updateIndexData(const uint fiberCount, const uint fiberRes);
     void updateFiberData();
@@ -65,10 +72,12 @@ public:
 private:
     const Buffer* spherePoints;
     Buffer lineInstances;
-    PrimitiveData<LineData> hopfCircles;
+    Buffer frameData;
+    PrimitiveData<Vertex> circleData;
+    PrimitiveData<Vertex> lineMeshData;
 
-    std::weak_ptr<ShaderManager> m_shaderManager;
-    int hf_draw_max = FIBER_COUNT;   
+    std::shared_ptr<SimulationParams> m_params;
+    std::shared_ptr<ShaderManager> m_shaderManager;
 };
 
 #endif
